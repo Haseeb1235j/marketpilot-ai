@@ -1322,7 +1322,9 @@ financial decisions, risk planning, and educational study results.
             })()}
           </CardContent>
         </Card>
-          {/* 2. Main Content Column: Chart & Interpretations */}
+      </div>
+
+      {/* 2. Main Content Column: Chart & Interpretations */}
       <div className="flex-1 flex flex-col gap-3 min-w-0">
         {/* Warning Banner if settings differ from snapshot */}
         {isStale && activeAnalysisSnapshot && (
@@ -1528,7 +1530,6 @@ financial decisions, risk planning, and educational study results.
             </div>
           )}
         </div>
-      </div>
 
         {/* Main Candlestick Chart */}
         <ChartContainer
