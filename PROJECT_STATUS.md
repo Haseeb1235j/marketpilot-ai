@@ -1,5 +1,7 @@
 # Project Status: MarketPilot AI
 
+> **Live Version 1.0 deployed successfully.**
+
 This document outlines the current milestone status, implemented features, technical limitations, and the upcoming roadmap phases for the MarketPilot AI codebase.
 
 ---
