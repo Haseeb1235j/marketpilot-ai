@@ -1077,21 +1077,22 @@ financial decisions, risk planning, and educational study results.
     <div className="flex flex-col lg:flex-row grow w-full gap-5 p-4 md:p-6 bg-[#070b14]">
       
       {/* 1. Left Sidebar: Market controls and Watchlist */}
-      <div className="w-full lg:w-[260px] shrink-0 flex flex-col gap-4">
+      <div className="w-full lg:w-[260px] shrink-0 flex flex-col gap-3">
         {/* Custom Symbol Adder */}
         <Card className="shrink-0">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Custom Symbol Input</CardTitle>
+          <CardHeader className="p-3 pb-1">
+            <CardTitle className="text-xs uppercase tracking-wider text-slate-400">Custom Symbol Input</CardTitle>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleAddCustomSymbol} className="space-y-3">
+          <CardContent className="p-3 pt-1">
+            <form onSubmit={handleAddCustomSymbol} className="space-y-2">
               <Input
                 placeholder="e.g. AMZN, INFY"
                 value={customSymbol}
                 onChange={(e) => setCustomSymbol(e.target.value)}
                 size="sm"
+                className="h-8 text-xs"
               />
-              <div className="flex gap-2">
+              <div className="flex gap-1.5">
                 <Select
                   options={[
                     { value: 'crypto', label: 'Crypto' },
@@ -1102,9 +1103,9 @@ financial decisions, risk planning, and educational study results.
                   ]}
                   value={customMarketType}
                   onChange={(e) => setCustomMarketType(e.target.value)}
-                  className="flex-1"
+                  className="flex-1 h-8 text-xs py-0 bg-slate-900"
                 />
-                <Button type="submit" variant="glass" size="sm">
+                <Button type="submit" variant="glass" size="sm" className="h-8 px-3 text-xs">
                   Add
                 </Button>
               </div>
@@ -1114,17 +1115,16 @@ financial decisions, risk planning, and educational study results.
 
         {/* Local Settings Panel */}
         <Card className="shrink-0">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Scan Settings</CardTitle>
+          <CardHeader className="p-3 pb-1">
+            <CardTitle className="text-xs uppercase tracking-wider text-slate-400">Scan Settings</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="p-3 pt-1 space-y-2">
             {/* Chart Source Toggle */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Feed Mode</label>
-              <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1 rounded-lg border border-darkBorder/80">
+            <div className="flex flex-col gap-1">
+              <div className="grid grid-cols-2 gap-1 bg-slate-950 p-0.5 rounded border border-darkBorder/60">
                 <button
                   onClick={() => setChartSource('live')}
-                  className={`py-1 text-[11px] font-semibold rounded-md cursor-pointer transition ${
+                  className={`py-1 text-[10px] font-bold rounded cursor-pointer transition ${
                     chartSource === 'live' ? 'bg-slate-800 text-cyan-400' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -1132,7 +1132,7 @@ financial decisions, risk planning, and educational study results.
                 </button>
                 <button
                   onClick={() => setChartSource('screenshot')}
-                  className={`py-1 text-[11px] font-semibold rounded-md cursor-pointer transition ${
+                  className={`py-1 text-[10px] font-bold rounded cursor-pointer transition ${
                     chartSource === 'screenshot' ? 'bg-slate-800 text-cyan-400' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -1143,16 +1143,16 @@ financial decisions, risk planning, and educational study results.
 
             {/* Screenshot file upload */}
             {chartSource === 'screenshot' && (
-              <div className="space-y-2">
-                <label className="flex flex-col items-center justify-center border border-dashed border-darkBorder rounded-lg p-3 hover:border-cyan-500/50 transition cursor-pointer bg-slate-950/60">
-                  <Upload className="w-5 h-5 text-slate-400 mb-1" />
-                  <span className="text-[10px] font-semibold text-slate-400 text-center">
-                    {screenshotFile ? screenshotFile.name : 'Upload chart image'}
+              <div className="space-y-1.5">
+                <label className="flex flex-col items-center justify-center border border-dashed border-darkBorder/60 rounded p-2 hover:border-cyan-500/30 transition cursor-pointer bg-slate-950/60">
+                  <Upload className="w-4 h-4 text-slate-400 mb-0.5" />
+                  <span className="text-[9px] text-slate-400 text-center">
+                    {screenshotFile ? screenshotFile.name : 'Upload chart'}
                   </span>
                   <input type="file" accept="image/*" className="hidden" onChange={handleScreenshotUpload} />
                 </label>
                 {screenshotPreview && (
-                  <div className="relative rounded overflow-hidden border border-darkBorder h-20 bg-slate-900 flex items-center justify-center">
+                  <div className="relative rounded overflow-hidden border border-darkBorder h-14 bg-slate-900 flex items-center justify-center">
                     <img src={screenshotPreview} alt="Preview" className="h-full object-contain" />
                     <button
                       onClick={() => {
@@ -1172,20 +1172,19 @@ financial decisions, risk planning, and educational study results.
 
         {/* Watchlist */}
         <Card className="flex flex-col shrink-0">
-          <CardHeader className="pb-2">
+          <CardHeader className="p-3 pb-1">
             <div>
-              <CardTitle>Educational Watchlist</CardTitle>
-              <CardDescription>Select asset to study</CardDescription>
+              <CardTitle className="text-xs uppercase tracking-wider text-slate-400">Educational Watchlist</CardTitle>
             </div>
           </CardHeader>
 
           {/* Watchlist Category Filter Tabs */}
-          <div className="px-3 pb-2.5 border-b border-darkBorder/30">
-            <div className="grid grid-cols-3 gap-1 p-1 bg-slate-950 rounded-xl border border-darkBorder/60">
+          <div className="px-3 pb-2 border-b border-darkBorder/25">
+            <div className="grid grid-cols-3 gap-1 p-0.5 bg-slate-950 rounded border border-darkBorder/60">
               {[
                 { id: 'crypto', label: 'Crypto' },
                 { id: 'forex', label: 'Forex' },
-                { id: 'commodity', label: 'Commodities' },
+                { id: 'commodity', label: 'Cmdty' },
                 { id: 'index', label: 'Indices' },
                 { id: 'stock', label: 'Stocks' },
                 { id: 'custom', label: 'Custom' }
@@ -1196,9 +1195,9 @@ financial decisions, risk planning, and educational study results.
                     key={tab.id}
                     type="button"
                     onClick={() => setSelectedCategory(tab.id)}
-                    className={`py-1.5 text-[10px] font-bold rounded-lg cursor-pointer transition-all text-center ${
+                    className={`py-1 text-[10px] font-bold rounded cursor-pointer transition-all text-center ${
                       isActive
-                        ? 'bg-slate-800 text-cyan-400 border border-cyan-800/40 shadow-sm'
+                        ? 'bg-slate-800 text-cyan-400 border border-cyan-800/35 shadow-sm'
                         : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
@@ -1209,7 +1208,7 @@ financial decisions, risk planning, and educational study results.
             </div>
           </div>
 
-          <CardContent className="max-h-[360px] overflow-y-auto px-1">
+          <CardContent className="max-h-[220px] overflow-y-auto px-1">
             <div className="divide-y divide-darkBorder/40">
               {(() => {
                 const filteredList = watchlist.filter((row) => {
@@ -1323,27 +1322,25 @@ financial decisions, risk planning, and educational study results.
             })()}
           </CardContent>
         </Card>
-      </div>
-
-      {/* 2. Main Content Column: Chart & Interpretations */}
-      <div className="flex-1 flex flex-col gap-4 min-w-0">
+          {/* 2. Main Content Column: Chart & Interpretations */}
+      <div className="flex-1 flex flex-col gap-3 min-w-0">
         {/* Warning Banner if settings differ from snapshot */}
         {isStale && activeAnalysisSnapshot && (
-          <div className="bg-amber-950/40 border border-amber-500/20 text-amber-300 rounded-xl px-4 py-3 text-xs flex items-center justify-between gap-3 shadow-lg backdrop-blur-md shrink-0">
+          <div className="bg-amber-950/40 border border-amber-500/20 text-amber-300 rounded-xl px-4 py-2 text-xs flex items-center justify-between gap-3 shadow-lg backdrop-blur-md shrink-0">
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
               <span>
                 Chart changed. Run analysis again to update report.
               </span>
             </div>
-            <Button variant="glass" size="sm" onClick={handleRunAnalysis} className="text-[11px] py-1 border-amber-500/20 hover:bg-amber-500/10 text-amber-200">
+            <Button variant="glass" size="sm" onClick={handleRunAnalysis} className="text-[10px] py-0.5 h-7 border-amber-500/20 hover:bg-amber-500/10 text-amber-200">
               Run Scan
             </Button>
           </div>
         )}
 
         {/* Timeframes Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-slate-950 border border-darkBorder rounded-2xl shrink-0">
+        <div className="flex flex-wrap items-center justify-between gap-2 p-2 bg-slate-950 border border-darkBorder rounded-xl shrink-0">
           <div className="flex items-center gap-1 overflow-x-auto max-w-full">
             {['1m', '5m', '15m', '30m', '1h', '4h', '1D', '1W', '1M'].map((tf) => {
               const isActive = selectedTimeframe === tf;
@@ -1351,7 +1348,7 @@ financial decisions, risk planning, and educational study results.
                 <button
                   key={tf}
                   onClick={() => setSelectedTimeframe(tf)}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg cursor-pointer transition-all ${
+                  className={`px-2 py-1 text-[11px] font-semibold rounded cursor-pointer transition-all ${
                     isActive
                       ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
@@ -1363,12 +1360,12 @@ financial decisions, risk planning, and educational study results.
             })}
           </div>
           
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-500 font-semibold uppercase">Tool:</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Tool:</span>
             <select
               value={selectedTool}
               onChange={(e) => setSelectedTool(e.target.value)}
-              className="bg-slate-900 border border-darkBorder rounded-lg text-xs font-semibold text-slate-300 px-3 py-1.5 focus:outline-none focus:border-cyan-500 cursor-pointer"
+              className="bg-slate-900 border border-darkBorder rounded text-xs font-semibold text-slate-300 px-2 py-1 focus:outline-none focus:border-cyan-500 cursor-pointer h-7"
             >
               {!['sma', 'ema', 'trendline', 'rsi', 'macd', 'bollinger_bands', 'volume', 'horizontal_sr', 'candlestick_patterns'].includes(selectedTool) && (
                 <option value={selectedTool}>
@@ -1401,19 +1398,19 @@ financial decisions, risk planning, and educational study results.
         </div>
 
         {/* Run Controls Toolbar */}
-        <div className="flex flex-col gap-3.5 p-3.5 bg-slate-950 border border-darkBorder rounded-2xl shrink-0 shadow-lg">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col gap-2 p-2.5 bg-slate-950 border border-darkBorder rounded-xl shrink-0 shadow-md">
+          <div className="flex flex-wrap items-center justify-between gap-2.5">
             {/* Left Column: Hero Run Scan Button & Full View */}
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 disabled={scanState === 'scanning'}
                 onClick={handleRunAnalysis}
-                className={`relative overflow-hidden group px-6 py-3 rounded-2xl font-bold text-sm tracking-wide transition-all duration-300 transform active:scale-95 shadow-xl select-none cursor-pointer flex items-center justify-center gap-2.5 min-w-[210px]
+                className={`relative overflow-hidden group px-4 py-2 rounded-xl font-bold text-xs tracking-wide transition-all duration-300 transform active:scale-95 shadow-md select-none cursor-pointer flex items-center justify-center gap-2 min-w-[180px] h-8
                   ${scanState === 'scanning'
                     ? 'bg-slate-900 border border-darkBorder text-slate-500 cursor-not-allowed shadow-none'
                     : isStale && activeAnalysisSnapshot
-                      ? 'bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-500 hover:from-teal-400 hover:via-cyan-400 hover:to-blue-400 text-white shadow-cyan-500/20 hover:shadow-cyan-400/40 border border-cyan-400/30 hover:-translate-y-0.5 animate-pulse'
-                      : 'bg-gradient-to-r from-cyan-600 via-teal-500 to-cyan-500 hover:from-cyan-500 hover:via-teal-400 hover:to-cyan-400 text-white shadow-cyan-500/10 hover:shadow-cyan-400/30 border border-cyan-400/20 hover:-translate-y-0.5'
+                      ? 'bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-500 hover:from-teal-400 hover:via-cyan-400 hover:to-blue-400 text-white border border-cyan-400/30 hover:-translate-y-0.5 animate-pulse'
+                      : 'bg-gradient-to-r from-cyan-600 via-teal-500 to-cyan-500 hover:from-cyan-500 hover:via-teal-400 hover:to-cyan-400 text-white border border-cyan-400/20 hover:-translate-y-0.5'
                   }
                 `}
               >
@@ -1424,20 +1421,20 @@ financial decisions, risk planning, and educational study results.
                 
                 {/* Glow background */}
                 {scanState !== 'scanning' && (
-                  <span className={`absolute -inset-1 rounded-2xl bg-gradient-to-r from-cyan-500 to-teal-500 opacity-25 group-hover:opacity-45 transition duration-300 -z-10 ${
-                    isStale && activeAnalysisSnapshot ? 'animate-pulse-glow' : 'blur-md'
+                  <span className={`absolute -inset-1 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-500 opacity-25 group-hover:opacity-45 transition duration-300 -z-10 ${
+                    isStale && activeAnalysisSnapshot ? 'animate-pulse-glow' : 'blur-sm'
                   }`} />
                 )}
 
                 {/* Icon */}
                 {scanState === 'scanning' ? (
-                  <Radar className="w-4 h-4 text-cyan-400 animate-spin" />
+                  <Radar className="w-3.5 h-3.5 text-cyan-400 animate-spin" />
                 ) : scanState === 'ready' ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-300 animate-bounce" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300 animate-bounce" />
                 ) : isStale && activeAnalysisSnapshot ? (
-                  <Zap className="w-4 h-4 text-amber-300 animate-bounce" />
+                  <Zap className="w-3.5 h-3.5 text-amber-300 animate-bounce" />
                 ) : (
-                  <Sparkles className="w-4 h-4 text-cyan-200 group-hover:rotate-12 transition-transform duration-300" />
+                  <Sparkles className="w-3.5 h-3.5 text-cyan-200 group-hover:rotate-12 transition-transform duration-300" />
                 )}
 
                 {/* Text */}
@@ -1457,9 +1454,9 @@ financial decisions, risk planning, and educational study results.
 
               <Button
                 variant="secondary"
-                size="md"
+                size="sm"
                 onClick={() => setIsFullViewOpen(true)}
-                className="hover:bg-slate-800 text-slate-300 border border-slate-700/80 rounded-xl"
+                className="hover:bg-slate-800 text-slate-300 border border-slate-700/80 rounded-xl h-8 text-xs px-3"
                 icon={Maximize2}
               >
                 Full View
@@ -1467,14 +1464,14 @@ financial decisions, risk planning, and educational study results.
             </div>
 
             {/* Right Column: Secondary Actions (Report, Video, Reset) */}
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               <div className="relative group">
                 <Button
                   variant="glass"
-                  size="md"
+                  size="sm"
                   disabled={!activeAnalysisSnapshot}
                   onClick={handleOpenVideoBreakdown}
-                  className={`rounded-xl transition ${
+                  className={`rounded-xl transition h-8 text-xs px-3 ${
                     !activeAnalysisSnapshot
                       ? 'opacity-50 cursor-not-allowed border-slate-800 text-slate-500 bg-slate-950/60'
                       : 'border-purple-500/20 text-purple-400 hover:bg-purple-500/10'
@@ -1493,11 +1490,11 @@ financial decisions, risk planning, and educational study results.
               <div className="relative group">
                 <Button
                   variant="secondary"
-                  size="md"
+                  size="sm"
                   disabled={!activeAnalysisSnapshot}
                   onClick={handleDownloadReport}
                   icon={Download}
-                  className={`rounded-xl ${
+                  className={`rounded-xl h-8 text-xs px-3 ${
                     !activeAnalysisSnapshot 
                       ? 'opacity-50 cursor-not-allowed bg-slate-900 border-slate-800 text-slate-500' 
                       : 'bg-slate-800 hover:bg-slate-700 text-slate-100'
@@ -1514,9 +1511,9 @@ financial decisions, risk planning, and educational study results.
 
               <Button
                 variant="ghost"
-                size="md"
+                size="sm"
                 onClick={handleReset}
-                className="hover:bg-slate-900 text-slate-500 hover:text-slate-300 border border-transparent hover:border-slate-800/40 rounded-xl"
+                className="hover:bg-slate-900 text-slate-500 hover:text-slate-300 border border-transparent hover:border-slate-800/40 rounded-xl h-8 text-xs px-3"
                 icon={RefreshCw}
               >
                 Reset
@@ -1526,11 +1523,12 @@ financial decisions, risk planning, and educational study results.
 
           {/* Helper Feedback Message */}
           {!activeAnalysisSnapshot && (
-            <div className="text-[10px] text-slate-500 text-right pr-2">
+            <div className="text-[10px] text-slate-600 text-right pr-2">
               * Run scan analysis first to enable technical report download.
             </div>
           )}
         </div>
+      </div>
 
         {/* Main Candlestick Chart */}
         <ChartContainer
@@ -1571,104 +1569,104 @@ financial decisions, risk planning, and educational study results.
         {/* 1. AI Scan Results Section */}
         <div ref={resultsRef} className="scroll-mt-6 shrink-0">
           <Card className="w-full bg-slate-950 border border-darkBorder/60">
-            <CardHeader className="pb-3 border-b border-darkBorder/30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <CardHeader className="p-3 pb-2 border-b border-darkBorder/30 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div>
-                <CardTitle className="text-base text-white">AI Scan Results</CardTitle>
-                <CardDescription>Educational breakdown of indicator calculations and market context</CardDescription>
+                <CardTitle className="text-sm font-bold text-white">AI Scan Results</CardTitle>
+                <CardDescription className="text-[10px]">Educational breakdown of indicator calculations and market context</CardDescription>
               </div>
               {displayResult && (
-                <Badge variant="cyan" className="font-mono text-xs uppercase py-0.5 self-start sm:self-auto">
+                <Badge variant="cyan" className="font-mono text-[10px] uppercase py-0.5 self-start sm:self-auto">
                   {displayResult.toolName} ({displayResult.timeframe})
                 </Badge>
               )}
             </CardHeader>
             
-            <CardContent className="pt-5">
+            <CardContent className="p-3 pt-3">
               {!displayResult ? (
                 /* Clean Empty State */
-                <div className="py-12 flex flex-col items-center justify-center text-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-slate-900 border border-darkBorder/60 flex items-center justify-center text-xl text-slate-500">
+                <div className="py-8 flex flex-col items-center justify-center text-center gap-2">
+                  <div className="w-10 h-10 rounded-full bg-slate-900 border border-darkBorder/60 flex items-center justify-center text-lg text-slate-500">
                     🔍
                   </div>
-                  <p className="text-sm font-medium text-slate-400">
+                  <p className="text-xs font-medium text-slate-400">
                     Run scan analysis to generate educational chart breakdown.
                   </p>
                 </div>
               ) : (
                 /* Filled State */
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {displayResult.chartSource === 'screenshot' && (
-                    <div className="lg:col-span-2 bg-yellow-950/20 border border-yellow-500/20 rounded-xl p-3 flex items-start gap-2.5">
-                      <ShieldAlert className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
+                    <div className="lg:col-span-2 bg-yellow-950/20 border border-yellow-500/20 rounded-lg p-2.5 flex items-start gap-2.5">
+                      <ShieldAlert className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
                       <div>
-                        <h4 className="text-xs font-bold text-yellow-400">Requires Backend AI Vision Integration</h4>
-                        <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                        <h4 className="text-[11px] font-bold text-yellow-400">Requires Backend AI Vision Integration</h4>
+                        <p className="text-[10px] text-slate-400 mt-0.5 leading-relaxed">
                           Automated visual scanning of uploaded chart images requires a secure backend connection to OpenAI Vision APIs. Currently showing simulated educational calibration coordinates.
                         </p>
                       </div>
                     </div>
                   )}
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {/* Main Observation */}
-                    <div className="bg-[#111726]/40 p-4 rounded-xl border border-darkBorder/40">
-                      <h5 className="font-bold text-white flex items-center gap-1.5 text-xs uppercase tracking-wider text-cyan-400">
+                    <div className="bg-[#111726]/40 p-3 rounded-lg border border-darkBorder/40">
+                      <h5 className="font-bold text-white flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-cyan-400">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         Main Observation
                       </h5>
-                      <p className="text-slate-300 mt-2.5 leading-relaxed text-xs">
+                      <p className="text-slate-300 mt-1.5 leading-relaxed text-xs">
                         {displayResult.mainObservation}
                       </p>
                     </div>
 
                     {/* Technical Reading */}
-                    <div className="bg-[#111726]/40 p-4 rounded-xl border border-darkBorder/40">
-                      <h5 className="font-bold text-white flex items-center gap-1.5 text-xs uppercase tracking-wider text-cyan-400">
+                    <div className="bg-[#111726]/40 p-3 rounded-lg border border-darkBorder/40">
+                      <h5 className="font-bold text-white flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-cyan-400">
                         📊 Selected Tool Reading
                       </h5>
-                      <p className="text-slate-300 mt-2.5 leading-relaxed text-xs">
+                      <p className="text-slate-300 mt-1.5 leading-relaxed text-xs">
                         {displayResult.selectedToolReading}
                       </p>
                     </div>
 
                     {/* Beginner Explanation */}
-                    <div className="bg-cyan-950/10 p-4 rounded-xl border border-cyan-500/10">
-                      <h5 className="font-bold text-white flex items-center gap-1.5 text-xs uppercase tracking-wider text-cyan-400">
+                    <div className="bg-cyan-950/10 p-3 rounded-lg border border-cyan-500/10">
+                      <h5 className="font-bold text-white flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-cyan-400">
                         💡 Beginner Explanation
                       </h5>
-                      <p className="text-slate-300 mt-2.5 leading-relaxed text-xs">
+                      <p className="text-slate-300 mt-1.5 leading-relaxed text-xs">
                         {displayResult.beginnerExplanation}
                       </p>
                     </div>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {/* Market Structure */}
-                    <div className="bg-[#111726]/40 p-4 rounded-xl border border-darkBorder/40">
-                      <h5 className="font-bold text-white flex items-center gap-1.5 text-xs uppercase tracking-wider text-cyan-400">
+                    <div className="bg-[#111726]/40 p-3 rounded-lg border border-darkBorder/40">
+                      <h5 className="font-bold text-white flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-cyan-400">
                         <Target className="w-3.5 h-3.5 animate-pulse" />
                         Market Structure
                       </h5>
-                      <p className="text-slate-300 mt-2.5 leading-relaxed text-xs">
+                      <p className="text-slate-300 mt-1.5 leading-relaxed text-xs">
                         {displayResult.marketStructure}
                       </p>
                     </div>
 
                     {/* Key Watch Zones */}
-                    <div className="bg-[#111726]/40 p-4 rounded-xl border border-darkBorder/40">
-                      <h5 className="font-bold text-white flex items-center gap-1.5 text-xs uppercase tracking-wider text-cyan-400">
+                    <div className="bg-[#111726]/40 p-3 rounded-lg border border-darkBorder/40">
+                      <h5 className="font-bold text-white flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-cyan-400">
                         🔑 Key Watch Zones
                       </h5>
-                      <p className="text-slate-300 mt-2.5 leading-relaxed text-xs font-mono">
+                      <p className="text-slate-300 mt-1.5 leading-relaxed text-xs font-mono">
                         {displayResult.keyWatchZones}
                       </p>
                     </div>
 
                     {/* What to Watch */}
-                    <div className="bg-[#111726]/40 p-4 rounded-xl border border-darkBorder/40">
-                      <h5 className="font-bold text-white flex items-center gap-1.5 text-xs uppercase tracking-wider text-cyan-400">
+                    <div className="bg-[#111726]/40 p-3 rounded-lg border border-darkBorder/40">
+                      <h5 className="font-bold text-white flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-cyan-400">
                         👁️ What to Watch
                       </h5>
-                      <p className="text-slate-300 mt-2.5 leading-relaxed text-xs">
+                      <p className="text-slate-300 mt-1.5 leading-relaxed text-xs">
                         {displayResult.whatToWatch}
                       </p>
                     </div>
@@ -1697,18 +1695,19 @@ financial decisions, risk planning, and educational study results.
             /* Filled State for Scenario Cards */
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* 1. Upside Case */}
-              <div className="bg-slate-950/80 p-4 rounded-2xl border-l-4 border-emerald-500 border border-darkBorder/40 flex flex-col justify-between min-h-[160px] hover:border-emerald-500/30 transition-all duration-300">
+              {/* 1. Upside Case */}
+              <div className="bg-slate-950/80 p-3 rounded-xl border-l-4 border-emerald-500 border border-darkBorder/40 flex flex-col justify-between min-h-[140px] hover:border-emerald-500/30 transition-all duration-300">
                 <div>
-                  <div className="flex items-center justify-between gap-2 mb-2.5">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
                       📈 Upside Case
                     </span>
                   </div>
-                  <p className="text-xs text-slate-300 leading-relaxed mb-4">
+                  <p className="text-xs text-slate-300 leading-relaxed mb-2">
                     {displayResult.upsideCase?.explanation}
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-1.5 pt-2 border-t border-darkBorder/20">
+                <div className="flex flex-wrap gap-1 pt-1.5 border-t border-darkBorder/20">
                   <Badge variant="emerald" className="text-[8px] px-2 py-0.5 uppercase tracking-wider font-semibold">
                     Clarity: {displayResult.upsideCase?.clarity || 'Medium'}
                   </Badge>
@@ -1722,18 +1721,18 @@ financial decisions, risk planning, and educational study results.
               </div>
 
               {/* 2. Downside Case */}
-              <div className="bg-slate-950/80 p-4 rounded-2xl border-l-4 border-red-500 border border-darkBorder/40 flex flex-col justify-between min-h-[160px] hover:border-red-500/30 transition-all duration-300">
+              <div className="bg-slate-950/80 p-3 rounded-xl border-l-4 border-red-500 border border-darkBorder/40 flex flex-col justify-between min-h-[140px] hover:border-red-500/30 transition-all duration-300">
                 <div>
-                  <div className="flex items-center justify-between gap-2 mb-2.5">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
                       📉 Downside Case
                     </span>
                   </div>
-                  <p className="text-xs text-slate-300 leading-relaxed mb-4">
+                  <p className="text-xs text-slate-300 leading-relaxed mb-2">
                     {displayResult.downsideCase?.explanation}
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-1.5 pt-2 border-t border-darkBorder/20">
+                <div className="flex flex-wrap gap-1 pt-1.5 border-t border-darkBorder/20">
                   <Badge variant="red" className="text-[8px] px-2 py-0.5 uppercase tracking-wider font-semibold">
                     Clarity: {displayResult.downsideCase?.clarity || 'Medium'}
                   </Badge>
@@ -1747,18 +1746,18 @@ financial decisions, risk planning, and educational study results.
               </div>
 
               {/* 3. Sideways Case */}
-              <div className="bg-slate-950/80 p-4 rounded-2xl border-l-4 border-yellow-500 border border-darkBorder/40 flex flex-col justify-between min-h-[160px] hover:border-yellow-500/30 transition-all duration-300">
+              <div className="bg-slate-950/80 p-3 rounded-xl border-l-4 border-yellow-500 border border-darkBorder/40 flex flex-col justify-between min-h-[140px] hover:border-yellow-500/30 transition-all duration-300">
                 <div>
-                  <div className="flex items-center justify-between gap-2 mb-2.5">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
                       ↕️ Sideways Case
                     </span>
                   </div>
-                  <p className="text-xs text-slate-300 leading-relaxed mb-4">
+                  <p className="text-xs text-slate-300 leading-relaxed mb-2">
                     {displayResult.sidewaysCase?.explanation}
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-1.5 pt-2 border-t border-darkBorder/20">
+                <div className="flex flex-wrap gap-1 pt-1.5 border-t border-darkBorder/20">
                   <Badge variant="yellow" className="text-[8px] px-2 py-0.5 uppercase tracking-wider font-semibold">
                     Clarity: {displayResult.sidewaysCase?.clarity || 'High'}
                   </Badge>
@@ -1777,11 +1776,11 @@ financial decisions, risk planning, and educational study results.
         {/* 3. Report & Export Section */}
         <div className="shrink-0">
           <Card className="w-full bg-slate-950 border border-darkBorder/60">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Report & Export</CardTitle>
-              <CardDescription>Export technical analysis calculations and study notes to standard offline format</CardDescription>
+            <CardHeader className="p-3 pb-1">
+              <CardTitle className="text-xs uppercase tracking-wider text-slate-400">Report & Export</CardTitle>
+              <CardDescription className="text-[10px]">Export technical analysis calculations and study notes to standard offline format</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-3 border-t border-darkBorder/30">
+            <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 pt-2 border-t border-darkBorder/30">
               <div className="text-xs text-slate-400 leading-relaxed">
                 {!activeAnalysisSnapshot ? (
                   <span className="text-slate-500 font-semibold">
@@ -1815,7 +1814,7 @@ financial decisions, risk planning, and educational study results.
         </div>
 
         {/* 4. Explore 50+ Tools Section */}
-        <div className="p-4 bg-gradient-to-r from-slate-950 to-slate-900 border border-darkBorder/60 rounded-2xl flex items-center justify-between shrink-0 hover:border-cyan-500/20 transition-all duration-300">
+        <div className="p-3 bg-gradient-to-r from-slate-950 to-slate-900 border border-darkBorder/60 rounded-xl flex items-center justify-between shrink-0 hover:border-cyan-500/20 transition-all duration-300">
           <div>
             <h4 className="text-xs font-bold text-white">Explore 50+ Tools</h4>
             <p className="text-[10px] text-slate-400 mt-0.5">Explore our comprehensive dictionary of 50+ indicators and dynamic risk formulas.</p>
