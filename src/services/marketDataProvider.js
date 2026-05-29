@@ -57,6 +57,34 @@ export function toBinanceSymbol(appSymbol) {
 }
 
 /**
+ * Maps application symbol to Twelve Data symbol (forex gets slashes EURUSD -> EUR/USD)
+ */
+export function toTwelveDataSymbol(appSymbol) {
+  if (!appSymbol) return null;
+  const upper = appSymbol.toUpperCase().trim();
+  
+  // Forex pairs mapping
+  const forexPairs = ['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD', 'USDCHF', 'NZDUSD'];
+  if (forexPairs.includes(upper)) {
+    return `${upper.slice(0, 3)}/${upper.slice(3)}`;
+  }
+  
+  // Commodities XAUUSD, XAGUSD
+  if (upper === 'XAUUSD' || upper === 'XAU/USD') return 'XAU/USD';
+  if (upper === 'XAGUSD' || upper === 'XAG/USD') return 'XAG/USD';
+  
+  // Standard stocks or indices
+  if (upper.length === 6 && !upper.includes('/')) {
+    const isCryptoWord = upper.startsWith('BTC') || upper.startsWith('ETH') || upper.startsWith('SOL') || upper.startsWith('BNB') || upper.startsWith('XRP') || upper.startsWith('ADA') || upper.startsWith('DOT') || upper.startsWith('DOGE') || upper.endsWith('USDT');
+    if (!isCryptoWord) {
+      return `${upper.slice(0, 3)}/${upper.slice(3)}`;
+    }
+  }
+
+  return upper;
+}
+
+/**
  * Normalise timeframe for Twelve Data
  */
 function normalizeTimeframeTwelveData(timeframe) {
@@ -138,22 +166,38 @@ export async function marketDataProvider({ symbol, timeframe, marketType, mode }
       };
     }
 
-    try {
-      const tdInterval = normalizeTimeframeTwelveData(timeframe);
-      const url = `https://api.twelvedata.com/time_series?symbol=${symbol}&interval=${tdInterval}&apikey=${twelvedataKey}&outputsize=150`;
+    const tdSymbol = toTwelveDataSymbol(symbol);
+    const tdInterval = normalizeTimeframeTwelveData(timeframe);
+    let fetchResponse = null;
 
-      if (import.meta.env.DEV) {
-        console.log("Twelve Data request:", { symbol, timeframe, url });
-      }
+    try {
+      const url = `https://api.twelvedata.com/time_series?symbol=${tdSymbol}&interval=${tdInterval}&apikey=${twelvedataKey}&outputsize=300`;
 
       const response = await fetch(url);
+      fetchResponse = response;
+
       if (!response.ok) {
-        throw new Error(`Twelve Data fetch failed with status ${response.status}`);
+        throw {
+          message: `Twelve Data fetch failed with status ${response.status}`
+        };
       }
+
       const data = await response.json();
       
+      // Twelve Data error responses are returned inside JSON { status: "error", message: "..." }
+      if (data && data.status === 'error') {
+        const msg = (data.message || '').toLowerCase();
+        const isNotFound = msg.includes('not found') || msg.includes('unsupported') || msg.includes('invalid') || msg.includes('exist');
+        throw {
+          isUnsupportedSymbol: isNotFound,
+          message: data.message || 'Twelve Data API returned error'
+        };
+      }
+
       if (!data || !data.values || !Array.isArray(data.values) || data.values.length === 0) {
-        throw new Error(data.message || 'Invalid Twelve Data response');
+        throw {
+          message: 'Invalid Twelve Data response structure or empty values'
+        };
       }
 
       const normalized = data.values.map(item => {
@@ -173,6 +217,21 @@ export async function marketDataProvider({ symbol, timeframe, marketType, mode }
         };
       }).reverse();
 
+      if (import.meta.env.DEV) {
+        console.log('[Dev Debug] Twelve Data Sourcing:', {
+          provider: "twelvedata",
+          appSymbol: symbol,
+          mappedSymbol: tdSymbol,
+          marketType,
+          appTimeframe: timeframe,
+          twelveInterval: tdInterval,
+          urlWithoutApiKey: `https://api.twelvedata.com/time_series?symbol=${tdSymbol}&interval=${tdInterval}&outputsize=300&apikey=HIDDEN_KEY`,
+          responseStatus: response.status,
+          candleCount: normalized.length,
+          errorMessage: null
+        });
+      }
+
       return {
         candles: normalized,
         mode: 'twelvedata',
@@ -180,15 +239,30 @@ export async function marketDataProvider({ symbol, timeframe, marketType, mode }
         isLive: true
       };
     } catch (e) {
+      const isUnsupported = e && e.isUnsupportedSymbol;
+      const errMsg = e && e.message ? e.message : String(e);
+
       if (import.meta.env.DEV) {
-        console.error("Twelve Data fails: ", e);
+        console.error('[Dev Debug] Twelve Data Failed:', {
+          provider: "twelvedata",
+          appSymbol: symbol,
+          mappedSymbol: tdSymbol,
+          marketType,
+          appTimeframe: timeframe,
+          twelveInterval: tdInterval,
+          urlWithoutApiKey: `https://api.twelvedata.com/time_series?symbol=${tdSymbol}&interval=${tdInterval}&outputsize=300&apikey=HIDDEN_KEY`,
+          responseStatus: fetchResponse ? fetchResponse.status : null,
+          candleCount: 0,
+          errorMessage: errMsg
+        });
       }
+
       return {
         candles: demoCandles,
         mode: 'demo_fallback',
-        message: 'Demo Feed — Twelve Data unavailable.',
+        message: isUnsupported ? 'Demo Feed — unsupported Twelve Data symbol.' : 'Demo Feed — Twelve Data unavailable.',
         isLive: false,
-        error: 'Twelve Data unavailable. Switched to demo feed.'
+        error: isUnsupported ? 'Unsupported Twelve Data symbol. Switched to demo feed.' : 'Twelve Data unavailable. Switched to demo feed.'
       };
     }
   }
