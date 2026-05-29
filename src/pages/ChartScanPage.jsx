@@ -1074,10 +1074,10 @@ financial decisions, risk planning, and educational study results.
   const displayResult = analysisResult || activeAnalysisSnapshot;
 
   return (
-    <div className="flex flex-col lg:flex-row grow w-full gap-5 p-4 md:p-6 bg-[#070b14]">
+    <div className="flex flex-col lg:flex-row w-full gap-6 p-4 md:p-6 bg-[#070b14] min-h-screen">
       
       {/* 1. Left Sidebar: Market controls and Watchlist */}
-      <div className="w-full lg:w-[260px] shrink-0 flex flex-col gap-3">
+      <div className="w-full lg:w-[320px] shrink-0 flex flex-col gap-3 lg:sticky lg:top-6 lg:h-[calc(100vh-48px)] lg:overflow-y-auto pr-1">
         {/* Custom Symbol Adder */}
         <Card className="shrink-0">
           <CardHeader className="p-3 pb-1">

@@ -97,7 +97,7 @@ export default function ChartContainer({
     }
 
     const chartWidth = chartContainerRef.current.clientWidth || 600;
-    const chartHeight = chartContainerRef.current.clientHeight || (isFullscreen ? window.innerHeight - 80 : 480);
+    const chartHeight = chartContainerRef.current.clientHeight || (isFullscreen ? window.innerHeight - 80 : 560);
 
     const chart = createChart(chartContainerRef.current, {
       width: chartWidth,
@@ -535,7 +535,8 @@ export default function ChartContainer({
       {/* Main Chart Area */}
       {chartSource === 'screenshot' ? (
         <div 
-          className={`relative w-full flex items-center justify-center bg-slate-950 p-6 ${isFullscreen ? 'min-h-0 flex-1' : 'h-[480px]'}`}
+          className={`relative w-full flex items-center justify-center bg-slate-950 p-6 ${isFullscreen ? 'min-h-0 flex-1' : ''}`}
+          style={isFullscreen ? {} : { height: 'clamp(480px, 58vh, 680px)' }}
         >
           <div className="absolute inset-0 opacity-15 flex flex-col justify-between p-4 pointer-events-none select-none">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -560,7 +561,8 @@ export default function ChartContainer({
       ) : (
         <div
           ref={chartContainerRef}
-          className={`w-full bg-[#070b14] relative ${isFullscreen ? 'h-[calc(100vh-80px)]' : 'h-[480px]'}`}
+          className={`w-full bg-[#070b14] relative`}
+          style={{ height: isFullscreen ? 'calc(100vh - 80px)' : 'clamp(480px, 58vh, 680px)' }}
         />
       )}
     </div>
