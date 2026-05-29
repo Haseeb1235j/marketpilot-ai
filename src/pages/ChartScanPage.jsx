@@ -13,6 +13,45 @@ import { generateSeededCandles } from '../utils/seededRandom';
 import { marketDataProvider, checkApiStatus, toBinanceSymbol, toBinanceInterval } from '../services/marketDataProvider';
 import { TOOLS_DIRECTORY } from '../data/toolsDirectory';
 
+/**
+ * Detect market category type based on symbol nomenclature
+ */
+function detectMarketTypeFromSymbol(symbol) {
+  if (!symbol) return null;
+  const clean = symbol.toUpperCase().replace('/', '').trim();
+  
+  // 1. Forex pairs: typical 6-letter currency codes
+  const forexPairs = ['EURUSD', 'GBPUSD', 'AUDUSD', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY', 'EURGBP', 'EURJPY', 'GBPJPY'];
+  if (forexPairs.includes(clean)) return 'forex';
+  if (clean.length === 6 && /^[A-Z]{6}$/.test(clean)) {
+    const isCryptoWord = clean.startsWith('BTC') || clean.startsWith('ETH') || clean.startsWith('SOL') || clean.startsWith('BNB') || clean.startsWith('XRP') || clean.startsWith('ADA') || clean.startsWith('DOT') || clean.startsWith('DOGE') || clean.endsWith('USDT');
+    if (!isCryptoWord) {
+      return 'forex';
+    }
+  }
+
+  // 2. Crypto symbols
+  const cryptoPairs = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT', 'DOGEUSDT', 'ADAUSDT', 'AVAXUSDT', 'DOTUSDT', 'MATICUSDT'];
+  if (cryptoPairs.includes(clean) || clean.endsWith('USDT') || clean.startsWith('BTC') || clean.startsWith('ETH') || clean.startsWith('SOL') || clean.startsWith('BNB')) {
+    return 'crypto';
+  }
+
+  // 3. Commodities
+  const commodities = ['XAUUSD', 'XAGUSD', 'USOIL', 'UKOIL', 'NATGAS'];
+  if (commodities.includes(clean)) return 'commodity';
+
+  // 4. Indices
+  const indices = ['NIFTY', 'BANKNIFTY', 'SENSEX', 'US100', 'US30', 'US500', 'SPX', 'IXIC', 'DJI', 'DAX40'];
+  if (indices.includes(clean)) return 'index';
+
+  // 5. Short tickers default to stock
+  if (clean.length >= 2 && clean.length <= 5 && /^[A-Z]+$/.test(clean)) {
+    return 'stock';
+  }
+
+  return null;
+}
+
 export default function ChartScanPage({
   selectedSymbol,
   setSelectedSymbol,
@@ -409,6 +448,58 @@ export default function ChartScanPage({
     }
   }, [selectedSymbol, selectedTimeframe, selectedTool, chartSource, activeAnalysisSnapshot]);
 
+  // Auto-sync selectedSymbol when category changes (and on mount to clean bad state)
+  useEffect(() => {
+    const currentItem = watchlist.find(w => w.symbol === selectedSymbol);
+    let isMatch = false;
+
+    if (currentItem) {
+      if (selectedCategory === 'custom') {
+        isMatch = currentItem.isCustom === true;
+      } else if (selectedCategory === 'commodity') {
+        isMatch = (currentItem.marketType === 'commodity' || currentItem.marketType === 'commodities') && !currentItem.isCustom;
+      } else if (selectedCategory === 'index') {
+        isMatch = (currentItem.marketType === 'index' || currentItem.marketType === 'indices') && !currentItem.isCustom;
+      } else if (selectedCategory === 'stock') {
+        isMatch = (currentItem.marketType === 'stock' || currentItem.marketType === 'stocks') && !currentItem.isCustom;
+      } else {
+        isMatch = currentItem.marketType === selectedCategory && !currentItem.isCustom;
+      }
+    }
+
+    if (!isMatch) {
+      // Explicit reset rules if mismatched on load/change
+      if (selectedCategory === 'crypto') {
+        setSelectedSymbol('BTC/USDT');
+      } else if (selectedCategory === 'forex') {
+        setSelectedSymbol('EUR/USD');
+      } else if (selectedCategory === 'stock') {
+        setSelectedSymbol('AAPL');
+      } else {
+        // Find the first symbol in the new category
+        const firstInCat = watchlist.find(row => {
+          if (selectedCategory === 'custom') {
+            return row.isCustom === true;
+          }
+          if (selectedCategory === 'commodity') {
+            return (row.marketType === 'commodity' || row.marketType === 'commodities') && !row.isCustom;
+          }
+          if (selectedCategory === 'index') {
+            return (row.marketType === 'index' || row.marketType === 'indices') && !row.isCustom;
+          }
+          if (selectedCategory === 'stock') {
+            return (row.marketType === 'stock' || row.marketType === 'stocks') && !row.isCustom;
+          }
+          return row.marketType === selectedCategory && !row.isCustom;
+        });
+
+        if (firstInCat) {
+          setSelectedSymbol(firstInCat.symbol);
+        }
+      }
+    }
+  }, [selectedCategory, watchlist, selectedSymbol, setSelectedSymbol]);
+
   // Persist settings
   useEffect(() => {
     localStorage.setItem('mp_symbol', selectedSymbol);
@@ -441,8 +532,17 @@ export default function ChartScanPage({
     if (!customSymbol.trim()) return;
     let formattedSymbol = customSymbol.toUpperCase().trim();
     
+    // Auto detect symbol type to avoid mismatch
+    let detectedType = detectMarketTypeFromSymbol(formattedSymbol);
+    let finalMarketType = customMarketType;
+    
+    if (detectedType && detectedType !== customMarketType) {
+      finalMarketType = detectedType;
+      setCustomMarketType(detectedType);
+    }
+    
     // Normalize USD crypto symbols to USDT manually added
-    if (customMarketType === 'crypto') {
+    if (finalMarketType === 'crypto') {
       const cleanUpper = formattedSymbol.toUpperCase().trim();
       if (cleanUpper === 'BTC/USD' || cleanUpper === 'BTCUSD') formattedSymbol = 'BTC/USDT';
       else if (cleanUpper === 'ETH/USD' || cleanUpper === 'ETHUSD') formattedSymbol = 'ETH/USDT';
@@ -471,8 +571,8 @@ export default function ChartScanPage({
     if (!watchlist.some(w => w.symbol === formattedSymbol)) {
       const newSym = {
         symbol: formattedSymbol,
-        marketType: customMarketType,
-        price: customMarketType === 'crypto' ? '120.00' : '1.0825',
+        marketType: finalMarketType,
+        price: finalMarketType === 'crypto' ? '120.00' : finalMarketType === 'forex' ? '1.0825' : '150.00',
         change: '+0.50%',
         isPositive: true,
         isCustom: true // Tag as custom symbol!

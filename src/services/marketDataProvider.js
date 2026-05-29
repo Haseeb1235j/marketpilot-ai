@@ -116,6 +116,83 @@ export async function marketDataProvider({ symbol, timeframe, marketType, mode }
   // Under all conditions, only demo mode works for now.
   // We check the requested mode and simulate fallback messages accordingly.
 
+  // Strict Provider Routing: Non-Crypto uses Twelve Data (or Demo if key missing / mode is demo)
+  if (marketType !== 'crypto') {
+    if (resolvedMode === 'demo') {
+      return {
+        candles: demoCandles,
+        mode: 'demo',
+        message: 'Demo Feed — connect API for live market data.',
+        isLive: false
+      };
+    }
+
+    const twelvedataKey = import.meta.env.VITE_TWELVEDATA_API_KEY;
+    if (!twelvedataKey || !twelvedataKey.trim()) {
+      return {
+        candles: demoCandles,
+        mode: 'demo_fallback',
+        message: 'Demo Feed — Twelve Data key not configured.',
+        isLive: false,
+        error: 'Twelve Data key not configured. Using demo feed.'
+      };
+    }
+
+    try {
+      const tdInterval = normalizeTimeframeTwelveData(timeframe);
+      const url = `https://api.twelvedata.com/time_series?symbol=${symbol}&interval=${tdInterval}&apikey=${twelvedataKey}&outputsize=150`;
+
+      if (import.meta.env.DEV) {
+        console.log("Twelve Data request:", { symbol, timeframe, url });
+      }
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Twelve Data fetch failed with status ${response.status}`);
+      }
+      const data = await response.json();
+      
+      if (!data || !data.values || !Array.isArray(data.values) || data.values.length === 0) {
+        throw new Error(data.message || 'Invalid Twelve Data response');
+      }
+
+      const normalized = data.values.map(item => {
+        let timestamp;
+        if (item.datetime.includes(':')) {
+          timestamp = Math.floor(new Date(item.datetime).getTime() / 1000);
+        } else {
+          timestamp = Math.floor(new Date(`${item.datetime} 00:00:00`).getTime() / 1000);
+        }
+        return {
+          time: timestamp,
+          open: Number(item.open),
+          high: Number(item.high),
+          low: Number(item.low),
+          close: Number(item.close),
+          volume: Number(item.volume || 0)
+        };
+      }).reverse();
+
+      return {
+        candles: normalized,
+        mode: 'twelvedata',
+        message: 'Twelve Data Market Data',
+        isLive: true
+      };
+    } catch (e) {
+      if (import.meta.env.DEV) {
+        console.error("Twelve Data fails: ", e);
+      }
+      return {
+        candles: demoCandles,
+        mode: 'demo_fallback',
+        message: 'Demo Feed — Twelve Data unavailable.',
+        isLive: false,
+        error: 'Twelve Data unavailable. Switched to demo feed.'
+      };
+    }
+  }
+
   if (resolvedMode === 'demo') {
     return {
       candles: demoCandles,
@@ -126,22 +203,6 @@ export async function marketDataProvider({ symbol, timeframe, marketType, mode }
   }
 
   if (resolvedMode === 'binance') {
-    // If marketType is not Crypto, we fallback to demo feed automatically
-    if (marketType !== 'crypto') {
-      if (import.meta.env.DEV) {
-        console.log('[Dev Debug] Fallback to Demo Feed: Market type is not crypto.', {
-          selectedSymbol: symbol,
-          marketType,
-          feedSourceUsed: 'Demo Feed Fallback'
-        });
-      }
-      return {
-        candles: demoCandles,
-        mode: 'demo',
-        message: 'Demo Feed — connect API for live market data.',
-        isLive: false
-      };
-    }
 
     const cleanSym = toBinanceSymbol(symbol);
     
