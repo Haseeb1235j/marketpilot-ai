@@ -66,6 +66,16 @@ export default function ChartScanPage({
   const [watchlist, setWatchlist] = useState(() => {
     const saved = localStorage.getItem('mp_watchlist');
     let list = saved ? JSON.parse(saved) : DEFAULT_WATCHLIST;
+
+    // Ensure all default watchlist items are present in the list
+    let listUpdated = false;
+    DEFAULT_WATCHLIST.forEach(defaultItem => {
+      const exists = list.some(item => item.symbol === defaultItem.symbol);
+      if (!exists) {
+        list.push(defaultItem);
+        listUpdated = true;
+      }
+    });
     
     // Defensive coding: sanitize and convert BNB/USD or other crypto USD pairs to USDT
     let changed = false;
@@ -116,7 +126,7 @@ export default function ChartScanPage({
       return item;
     });
 
-    if (changed) {
+    if (changed || listUpdated) {
       localStorage.setItem('mp_watchlist', JSON.stringify(list));
     }
     return list;
@@ -1547,7 +1557,7 @@ financial decisions, risk planning, and educational study results.
         {feedStatus.error && feedStatus.mode === 'demo_fallback' && (
           <div className="bg-amber-950/40 border border-amber-500/20 text-amber-300 rounded-xl px-4 py-2.5 text-xs flex items-center gap-2 shrink-0 select-none">
             <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-            <span>Binance data unavailable for this symbol/timeframe. Switched to demo feed.</span>
+            <span>{feedStatus.error}</span>
           </div>
         )}
 

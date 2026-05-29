@@ -19,6 +19,9 @@ export const DEFAULT_WATCHLIST = [
   { symbol: 'USDCAD', marketType: 'forex', price: '1.3680', change: '+0.10%', isPositive: true },
   { symbol: 'USDCHF', marketType: 'forex', price: '0.9080', change: '-0.05%', isPositive: false },
   { symbol: 'NZDUSD', marketType: 'forex', price: '0.6120', change: '+0.18%', isPositive: true },
+  { symbol: 'EURGBP', marketType: 'forex', price: '0.8520', change: '+0.05%', isPositive: true },
+  { symbol: 'EURJPY', marketType: 'forex', price: '169.50', change: '+0.25%', isPositive: true },
+  { symbol: 'GBPJPY', marketType: 'forex', price: '199.10', change: '+0.30%', isPositive: true },
 
   // Commodities
   { symbol: 'XAUUSD', marketType: 'commodity', price: '2,342.60', change: '+0.54%', isPositive: true },
@@ -44,5 +47,6 @@ export const DEFAULT_WATCHLIST = [
   { symbol: 'NVDA', marketType: 'stock', price: '948.00', change: '+4.85%', isPositive: true },
   { symbol: 'AMZN', marketType: 'stock', price: '182.10', change: '-0.90%', isPositive: false },
   { symbol: 'META', marketType: 'stock', price: '475.40', change: '-1.15%', isPositive: false },
-  { symbol: 'GOOGL', marketType: 'stock', price: '174.20', change: '+1.42%', isPositive: true }
+  { symbol: 'GOOGL', marketType: 'stock', price: '174.20', change: '+1.42%', isPositive: true },
+  { symbol: 'NFLX', marketType: 'stock', price: '645.20', change: '+1.75%', isPositive: true }
 ];

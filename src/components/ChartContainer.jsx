@@ -491,30 +491,46 @@ export default function ChartContainer({
         </div>
       </div>
 
-      {/* Disclaimer banner for Binance Spot data / Demo Feed */}
-      {chartSource === 'live' && (
-        <div className="bg-[#0c101d] border-b border-darkBorder/40 px-4 py-1.5 text-[10px] text-slate-400 flex flex-wrap items-center justify-between gap-2 shrink-0 select-none">
-          <div className="flex items-center gap-1.5">
-            <span className={`inline-block w-1.5 h-1.5 rounded-full ${feedStatus?.isLive ? 'bg-emerald-400 animate-pulse' : 'bg-cyan-400'}`}></span>
-            <span>
-              {feedStatus?.isLive ? (
-                <>
-                  <strong>Binance Spot feed active.</strong> {feedStatus?.warning ? feedStatus.warning : "Prices may differ from broker/CFD platforms due to exchange source, spread, liquidity provider, and symbol type."}
-                </>
-              ) : (
-                <>
-                  {feedStatus?.warning ? feedStatus.warning : (feedStatus?.message || 'Demo Feed — connect API for live market data.')}
-                </>
-              )}
-            </span>
-          </div>
-          {lastUpdatedTime && (
-            <div className="text-[9px] font-mono text-slate-500 bg-slate-950 px-2 py-0.5 rounded border border-darkBorder/30">
-              {symbol} | {feedStatus?.isLive ? 'Binance Spot' : 'Demo Feed'} | {timeframe} | Last updated: {lastUpdatedTime}
+      {/* Disclaimer banner for Binance Spot data / Demo Feed / Twelve Data */}
+      {chartSource === 'live' && (() => {
+        const isCryptoSymbol = symbol && (symbol.includes('/USDT') || symbol.endsWith('USDT'));
+        return (
+          <div className="bg-[#0c101d] border-b border-darkBorder/40 px-4 py-1.5 text-[10px] text-slate-400 flex flex-wrap items-center justify-between gap-2 shrink-0 select-none">
+            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+              <span className={`inline-block w-1.5 h-1.5 rounded-full ${feedStatus?.isLive ? 'bg-emerald-400 animate-pulse' : 'bg-cyan-400'}`}></span>
+              <span className="truncate">
+                {feedStatus?.isLive ? (
+                  <>
+                    {feedStatus?.mode === 'twelvedata' ? (
+                      <>
+                        <strong>Twelve Data feed active.</strong> Twelve Data availability may depend on symbol, market hours, interval, and plan limits.
+                      </>
+                    ) : (
+                      <>
+                        <strong>Binance Spot feed active.</strong> {feedStatus?.warning ? feedStatus.warning : "Prices may differ from broker/CFD platforms due to exchange source, spread, liquidity provider, and symbol type."}
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {feedStatus?.warning ? feedStatus.warning : (feedStatus?.message || 'Demo Feed — connect API for live market data.')}
+                    {!isCryptoSymbol && (
+                      <span className="text-slate-500 ml-1">
+                        — Twelve Data availability may depend on symbol, market hours, interval, and plan limits.
+                      </span>
+                    )}
+                  </>
+                )}
+              </span>
             </div>
-          )}
-        </div>
-      )}
+            {lastUpdatedTime && (
+              <div className="text-[9px] font-mono text-slate-500 bg-slate-950 px-2 py-0.5 rounded border border-darkBorder/30">
+                {symbol} | {feedStatus?.isLive ? (feedStatus?.mode === 'twelvedata' ? 'Twelve Data' : 'Binance Spot') : 'Demo Feed'} | {timeframe} | Last updated: {lastUpdatedTime}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Main Chart Area */}
       {chartSource === 'screenshot' ? (

@@ -63,18 +63,22 @@ export function toTwelveDataSymbol(appSymbol) {
   if (!appSymbol) return null;
   const upper = appSymbol.toUpperCase().trim();
   
+  if (upper.includes('/')) {
+    return upper;
+  }
+
   // Forex pairs mapping
-  const forexPairs = ['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD', 'USDCHF', 'NZDUSD'];
+  const forexPairs = ['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD', 'USDCHF', 'NZDUSD', 'EURGBP', 'EURJPY', 'GBPJPY'];
   if (forexPairs.includes(upper)) {
     return `${upper.slice(0, 3)}/${upper.slice(3)}`;
   }
   
   // Commodities XAUUSD, XAGUSD
-  if (upper === 'XAUUSD' || upper === 'XAU/USD') return 'XAU/USD';
-  if (upper === 'XAGUSD' || upper === 'XAG/USD') return 'XAG/USD';
+  if (upper === 'XAUUSD') return 'XAU/USD';
+  if (upper === 'XAGUSD') return 'XAG/USD';
   
   // Standard stocks or indices
-  if (upper.length === 6 && !upper.includes('/')) {
+  if (upper.length === 6) {
     const isCryptoWord = upper.startsWith('BTC') || upper.startsWith('ETH') || upper.startsWith('SOL') || upper.startsWith('BNB') || upper.startsWith('XRP') || upper.startsWith('ADA') || upper.startsWith('DOT') || upper.startsWith('DOGE') || upper.endsWith('USDT');
     if (!isCryptoWord) {
       return `${upper.slice(0, 3)}/${upper.slice(3)}`;
@@ -89,11 +93,11 @@ export function toTwelveDataSymbol(appSymbol) {
  */
 function normalizeTimeframeTwelveData(timeframe) {
   const num = parseInt(timeframe);
-  const unit = timeframe.replace(num, '').toLowerCase();
+  const unit = timeframe.replace(num, '').trim();
   if (unit === 'm') return `${num}min`;
   if (unit === 'h') return `${num}h`;
-  if (unit === 'd') return '1day';
-  if (unit === 'w') return '1week';
+  if (unit === 'd' || unit === 'D') return '1day';
+  if (unit === 'w' || unit === 'W') return '1week';
   if (unit === 'mo' || unit === 'M') return '1month';
   return '1h';
 }
@@ -110,6 +114,57 @@ function normalizeTimeframeAlphaVantage(timeframe) {
   if (unit === 'w') return 'weekly';
   if (unit === 'mo' || unit === 'M') return 'monthly';
   return '60min';
+}
+
+// Twelve Data Caching and Debouncing State
+const twelveDataCache = new Map(); // key: `${symbol}_${timeframe}_${marketType}`, value: { timestamp, response }
+let lastTwelveDataRequestToken = 0;
+
+/**
+ * Classify Twelve Data errors into standard user-facing labels
+ */
+function classifyTwelveDataError(error, responseStatus) {
+  const errMsg = (error && error.message ? error.message : String(error)).toLowerCase();
+  
+  if (responseStatus === 429 || errMsg.includes('limit') || errMsg.includes('rate') || errMsg.includes('credits') || errMsg.includes('plan')) {
+    return {
+      message: 'Demo Feed — Twelve Data limit reached.',
+      error: 'Twelve Data API limit reached. Switched to demo feed.'
+    };
+  }
+  
+  if (responseStatus === 404 || errMsg.includes('not found') || errMsg.includes('unsupported symbol') || errMsg.includes('invalid symbol') || errMsg.includes('exist') || errMsg.includes('symbol')) {
+    return {
+      message: 'Demo Feed — unsupported Twelve Data symbol.',
+      error: 'Unsupported Twelve Data symbol. Switched to demo feed.'
+    };
+  }
+  
+  if (errMsg.includes('interval') || errMsg.includes('timeframe') || errMsg.includes('period')) {
+    return {
+      message: 'Demo Feed — interval not supported.',
+      error: 'Timeframe/interval not supported by Twelve Data. Switched to demo feed.'
+    };
+  }
+
+  if (errMsg.includes('no data') || errMsg.includes('closed') || errMsg.includes('empty')) {
+    return {
+      message: 'Demo Feed — Twelve Data unavailable.',
+      error: 'Market closed or no data available. Switched to demo feed.'
+    };
+  }
+  
+  if (errMsg.includes('fetch') || errMsg.includes('network') || errMsg.includes('offline') || errMsg.includes('cors')) {
+    return {
+      message: 'Demo Feed — Twelve Data unavailable.',
+      error: 'Network unavailable. Switched to demo feed.'
+    };
+  }
+
+  return {
+    message: 'Demo Feed — Twelve Data unavailable.',
+    error: error.message || 'Twelve Data unavailable. Switched to demo feed.'
+  };
 }
 
 /**
@@ -129,7 +184,7 @@ export async function marketDataProvider({ symbol, timeframe, marketType, mode }
   const tfNum = parseInt(timeframe);
   const tfUnit = timeframe.replace(tfNum, '').trim();
   const isValidTimeframe = !isNaN(tfNum) && supportedTimeframeUnits.includes(tfUnit);
-  const isValidSymbol = symbol && symbol.length >= 3 && symbol.includes('/');
+  const isValidSymbol = symbol && symbol.length >= 3;
 
   if (!isValidSymbol || !isValidTimeframe) {
     return {
@@ -144,6 +199,8 @@ export async function marketDataProvider({ symbol, timeframe, marketType, mode }
   // Under all conditions, only demo mode works for now.
   // We check the requested mode and simulate fallback messages accordingly.
 
+  const cacheKey = `${symbol}_${timeframe}_${marketType}`;
+
   // Strict Provider Routing: Non-Crypto uses Twelve Data (or Demo if key missing / mode is demo)
   if (marketType !== 'crypto') {
     if (resolvedMode === 'demo') {
@@ -153,6 +210,15 @@ export async function marketDataProvider({ symbol, timeframe, marketType, mode }
         message: 'Demo Feed — connect API for live market data.',
         isLive: false
       };
+    }
+
+    // Cache lookup (valid for 60 seconds)
+    const cachedEntry = twelveDataCache.get(cacheKey);
+    if (cachedEntry && (Date.now() - cachedEntry.timestamp < 60000)) {
+      if (import.meta.env.DEV) {
+        console.log('[Dev Debug] Twelve Data Cache Hit:', cacheKey);
+      }
+      return cachedEntry.response;
     }
 
     const twelvedataKey = import.meta.env.VITE_TWELVEDATA_API_KEY;
@@ -169,6 +235,26 @@ export async function marketDataProvider({ symbol, timeframe, marketType, mode }
     const tdSymbol = toTwelveDataSymbol(symbol);
     const tdInterval = normalizeTimeframeTwelveData(timeframe);
     let fetchResponse = null;
+
+    // Debounce: Wait 350ms to see if user changed selection.
+    const myRequestToken = ++lastTwelveDataRequestToken;
+    await new Promise(resolve => setTimeout(resolve, 350));
+    if (myRequestToken !== lastTwelveDataRequestToken) {
+      if (import.meta.env.DEV) {
+        console.log('[Dev Debug] Twelve Data request superceded:', cacheKey);
+      }
+      const cachedBackup = twelveDataCache.get(cacheKey);
+      if (cachedBackup) {
+        return cachedBackup.response;
+      }
+      return {
+        candles: demoCandles,
+        mode: 'demo_fallback',
+        message: 'Demo Feed — Twelve Data unavailable.',
+        isLive: false,
+        error: 'Request superceded.'
+      };
+    }
 
     try {
       const url = `https://api.twelvedata.com/time_series?symbol=${tdSymbol}&interval=${tdInterval}&apikey=${twelvedataKey}&outputsize=300`;
@@ -194,9 +280,12 @@ export async function marketDataProvider({ symbol, timeframe, marketType, mode }
         };
       }
 
-      if (!data || !data.values || !Array.isArray(data.values) || data.values.length === 0) {
+      const hasValues = data && Array.isArray(data.values);
+      const isStatusOk = data && (data.status === 'ok' || !data.status);
+
+      if (!hasValues || !isStatusOk) {
         throw {
-          message: 'Invalid Twelve Data response structure or empty values'
+          message: data ? data.message || 'Twelve Data returned invalid status or empty values' : 'No response data'
         };
       }
 
@@ -215,54 +304,72 @@ export async function marketDataProvider({ symbol, timeframe, marketType, mode }
           close: Number(item.close),
           volume: Number(item.volume || 0)
         };
-      }).reverse();
+      });
+
+      // Sort oldest to newest
+      normalized.sort((a, b) => a.time - b.time);
 
       if (import.meta.env.DEV) {
         console.log('[Dev Debug] Twelve Data Sourcing:', {
-          provider: "twelvedata",
-          appSymbol: symbol,
+          provider: 'twelvedata',
           mappedSymbol: tdSymbol,
-          marketType,
-          appTimeframe: timeframe,
-          twelveInterval: tdInterval,
-          urlWithoutApiKey: `https://api.twelvedata.com/time_series?symbol=${tdSymbol}&interval=${tdInterval}&outputsize=300&apikey=HIDDEN_KEY`,
+          interval: tdInterval,
           responseStatus: response.status,
-          candleCount: normalized.length,
-          errorMessage: null
+          valuesLength: data.values.length,
+          normalizedCandleCount: normalized.length,
+          firstCandleTime: normalized.length > 0 ? normalized[0].time : null,
+          lastCandleTime: normalized.length > 0 ? normalized[normalized.length - 1].time : null
         });
       }
 
-      return {
+      const successResponse = {
         candles: normalized,
         mode: 'twelvedata',
         message: 'Twelve Data Market Data',
         isLive: true
       };
+
+      // Cache successful response
+      twelveDataCache.set(cacheKey, {
+        timestamp: Date.now(),
+        response: successResponse
+      });
+
+      return successResponse;
     } catch (e) {
-      const isUnsupported = e && e.isUnsupportedSymbol;
-      const errMsg = e && e.message ? e.message : String(e);
+      const responseStatus = fetchResponse ? fetchResponse.status : null;
+      const errorClassification = classifyTwelveDataError(e, responseStatus);
 
       if (import.meta.env.DEV) {
         console.error('[Dev Debug] Twelve Data Failed:', {
-          provider: "twelvedata",
-          appSymbol: symbol,
+          provider: 'twelvedata',
           mappedSymbol: tdSymbol,
-          marketType,
-          appTimeframe: timeframe,
-          twelveInterval: tdInterval,
-          urlWithoutApiKey: `https://api.twelvedata.com/time_series?symbol=${tdSymbol}&interval=${tdInterval}&outputsize=300&apikey=HIDDEN_KEY`,
-          responseStatus: fetchResponse ? fetchResponse.status : null,
-          candleCount: 0,
-          errorMessage: errMsg
+          interval: tdInterval,
+          responseStatus,
+          errorMessage: e && e.message ? e.message : String(e)
         });
+      }
+
+      // Check if we have any cached data for this key (even if expired) to avoid blank chart or fallback
+      const cachedBackup = twelveDataCache.get(cacheKey);
+      if (cachedBackup) {
+        if (import.meta.env.DEV) {
+          console.log('[Dev Debug] Twelve Data using expired cache as backup fallback:', cacheKey);
+        }
+        return {
+          ...cachedBackup.response,
+          message: 'Twelve Data Market Data (Cached)',
+          isLive: true,
+          warning: 'Using cached market data (Twelve Data is currently offline/limit reached).'
+        };
       }
 
       return {
         candles: demoCandles,
         mode: 'demo_fallback',
-        message: isUnsupported ? 'Demo Feed — unsupported Twelve Data symbol.' : 'Demo Feed — Twelve Data unavailable.',
+        message: errorClassification.message,
         isLive: false,
-        error: isUnsupported ? 'Unsupported Twelve Data symbol. Switched to demo feed.' : 'Twelve Data unavailable. Switched to demo feed.'
+        error: errorClassification.error
       };
     }
   }
