@@ -1,86 +1,165 @@
 # MarketPilot AI
 
-MarketPilot AI is a comprehensive educational candlestick scanning and technical analysis simulator. It is designed to assist traders and learners in analyzing chart patterns, evaluating key indicators, and building mock scenario risk assessments without using real capital or live broker interfaces.
+**Educational Crypto Chart Analysis with AI-Style Scan Reports**
 
-> [!IMPORTANT]
-> **EDUCATIONAL-ONLY DISCLAIMER**
-> MarketPilot AI is strictly an educational tool and simulator. It does not provide real financial advice, execute live trades, connect to trading broker accounts, or support real money operations. All trade scanning and pattern detections are simulated and designed for educational research only.
+> ⚠️ MarketPilot AI is an educational chart analysis tool. It does **not** provide financial advice, buy/sell signals, guaranteed predictions, or profit recommendations.
 
 ---
 
-## Technical Stack
+## What Is MarketPilot AI?
 
-- **Core**: HTML5 & React (v19)
-- **Styling**: Tailwind CSS & Vanilla CSS modules
-- **Charts**: Lightweight Charts (TradingView) for interactive canvas drawing
-- **State & Animations**: React hooks & Framer Motion
-- **Build Tooling**: Vite for fast bundling and Hot Module Replacement (HMR)
-- **Indicators**: `technicalindicators` for client-side mathematical calculations
+MarketPilot AI is a premium educational market chart analysis platform. It helps users study crypto charts using live Binance market data, timeframe-aware technical tools, AI-style scan reports, scenario cases, video-style explanations, and downloadable reports — all from one beautiful dark dashboard.
 
 ---
 
-## Key Features
+## Features
 
-1. **Interactive Charting Canvas**: Fast Lightweight Charts integration supporting zoom, pan, and real-time updates.
-2. **Double Feeds Engine**:
-   - **Demo Feed Mode**: Uses custom seeded candle data to run offline without any API keys.
-   - **Binance Public Market Data**: Loads historical REST spot candles and updates the latest candle in real time via public WebSockets.
-3. **Multi-Timeframe Analysis**: Full validation and charting for `1m`, `5m`, `15m`, `30m`, `1h`, `4h`, `1D`, `1W`, and `1M`.
-4. **Tool-Specific Scan Engine**: Scans charts with 50+ technical tools (Support/Resistance, EMAs, Bollinger Bands, RSI, Candlestick Patterns) and outputs observations, risk parameters, and watch zones.
-5. **Scenario Assessments**: Compiles automated upside, downside, and sideways path risk guides.
-6. **Download Report**: Generates and downloads plain-text structural scan reports based on frozen snapshot candles.
-7. **API Readiness Status**: Client-side monitoring card showcasing which APIs are connected or require proxy/backend integrations.
-8. **Interactive Suite**: Educational guides, lessons, and interactive quiz sheets.
+| Feature | Status |
+|---|---|
+| Landing Page | ✅ Complete |
+| Login / Demo Auth | ✅ Complete |
+| Main Dashboard | ✅ Complete |
+| AI Chart Scan | ✅ Complete |
+| AI Chat Assistant | ✅ Complete |
+| 50+ Tools Directory | ✅ Complete |
+| Interactive Suite (Calculators) | ✅ Complete |
+| Reports & Export | ✅ Complete |
+| Pricing Page | ✅ Complete (Coming Soon) |
+| Feedback / Contact | ✅ Complete (mailto) |
+| Compliance / Disclaimer | ✅ Complete |
+| Settings | ✅ Complete |
+| 404 Not Found | ✅ Complete |
+
+### Core Capabilities
+- **Live Binance Crypto Charts** — BTC, ETH, BNB, SOL, XRP, DOGE, ADA, AVAX, DOT, MATIC, LTC, TRX, LINK, BCH, UNI (15+ pairs)
+- **Timeframes** — 1m, 5m, 15m, 30m, 1h, 4h, 1D, 1W, 1M
+- **50+ Technical Tools** — Trend, Momentum, Volume, Volatility, S/R, Price Action, Patterns, Risk Tools
+- **AI-Style Scan Reports** — Timeframe-aware educational analysis
+- **Scenario Clarity Cards** — Upside, Downside, Sideways educational scenarios
+- **Video Breakdown** — Narrated 8-step guided lessons
+- **Download Reports** — TXT educational scan reports
+- **Screenshot Mode** — Visual reference upload (educational only)
+- **Demo Mode** — No login required, full-featured offline experience
 
 ---
 
-## Installation & Setup
+## Tech Stack
 
-Ensure you have [Node.js](https://nodejs.org/) installed on your machine.
-
-### 1. Install Dependencies
-```bash
-npm install
-```
-
-### 2. Run the Development Server
-```bash
-npm run dev
-```
-The application will start locally at `http://localhost:5173/`.
-
-### 3. Build for Production
-```bash
-npm run build
-```
-This generates optimized static files in the `/dist` directory.
+- **Framework**: Vite + React 18
+- **Styling**: Tailwind CSS v4
+- **Charts**: lightweight-charts (TradingView)
+- **Animations**: Framer Motion
+- **Icons**: Lucide React
+- **Data**: Binance Public REST + WebSocket (no API key needed)
 
 ---
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` or `.env.local` to customize settings.
+Copy `.env` and configure:
 
+```bash
+cp .env .env.local
+```
+
+### Required (Crypto Mode)
 ```env
-# Set 'demo' or 'binance' mode
 VITE_MARKET_DATA_MODE=binance
 VITE_ENABLE_DEMO_FEED=true
 VITE_BINANCE_PUBLIC_MODE=true
 ```
 
+### Optional Future Integrations
+```env
+VITE_TWELVEDATA_API_KEY=       # Stocks/forex (future)
+VITE_ALPHAVANTAGE_API_KEY=     # Stocks (future)
+VITE_SUPABASE_URL=             # Cloud login (future)
+VITE_SUPABASE_ANON_KEY=        # Cloud login (future)
+VITE_RAZORPAY_KEY_ID=          # Payments (future)
+```
+
+### NEVER expose in frontend
+```
+OPENAI_API_KEY
+RAZORPAY_KEY_SECRET
+SUPABASE_SERVICE_ROLE_KEY
+```
+
 ---
 
-## Security Guidelines
+## Local Setup
 
-- **No Secrets in Frontend**: Never place private credentials, Supabase service role keys, or OpenAI API keys inside client-side environment configurations.
-- **Backend Proxies**: Route AI Vision requests, payment processing, or database management tasks through a secure backend server to keep keys protected.
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+```
 
 ---
 
-## Future Roadmap
+## Deployment (Vercel)
 
-- **Phase 5A**: Production Deployment Preparation.
-- **Phase 5B**: Integrate Twelve Data APIs for Stocks, Forex, and Market Indices.
-- **Phase 5C**: Enable AI Vision analysis via backend-proxied OpenAI API connections.
-- **Phase 5D**: Add Supabase auth systems for user profile syncs.
-- **Phase 5E**: Integrate Razorpay payment flow tests.
+1. Push repository to GitHub
+2. Connect repo to [Vercel](https://vercel.com)
+3. Set environment variables in Vercel dashboard:
+   - `VITE_MARKET_DATA_MODE=binance`
+   - `VITE_ENABLE_DEMO_FEED=true`
+   - `VITE_BINANCE_PUBLIC_MODE=true`
+4. Deploy — no build config changes needed
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for full deployment guide.
+
+---
+
+## Architecture Limitations (v1.0)
+
+| Feature | Status |
+|---|---|
+| Forex / Stocks / Commodities | Coming in future version |
+| AI Vision Screenshot Analysis | Requires backend (Backend Required) |
+| Cloud Saved Reports | Requires Supabase backend |
+| Real Payments | Razorpay — Coming Soon |
+| OpenAI Chat Assistant | Backend Required (currently local mock) |
+
+---
+
+## Safety & Educational Policy
+
+MarketPilot AI strictly follows an educational-only policy:
+
+- ❌ No buy/sell signals
+- ❌ No profit guarantees
+- ❌ No financial advice
+- ✅ Educational chart structure study only
+- ✅ Scenario "possible cases" only
+- ✅ Clarity scores = chart structure quality (not win probability)
+
+---
+
+## Roadmap
+
+- [ ] Cloud login (Supabase)
+- [ ] Saved report history
+- [ ] PDF report export
+- [ ] Pro plan (Razorpay)
+- [ ] Forex/Stocks via Twelve Data
+- [ ] AI Vision screenshot analysis (backend)
+- [ ] Mobile PWA
+
+---
+
+## Disclaimer
+
+MarketPilot AI is an educational chart analysis tool. It does not provide financial advice, buy/sell signals, guaranteed predictions, or profit recommendations. All scan results, scenario cases, and clarity scores are for educational chart study only. Past chart patterns do not guarantee future market behavior. Always consult a qualified financial advisor before making investment decisions.
+
+---
+
+© 2025 MarketPilot AI — Educational Platform

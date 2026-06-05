@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Download, RefreshCw, Star, Upload, Target, ShieldAlert, Sparkles, CheckCircle2, ChevronRight, X, AlertTriangle, MonitorPlay, Radar, Zap, Maximize2 } from 'lucide-react';
+import { Download, RefreshCw, Star, Upload, Target, ShieldAlert, Sparkles, CheckCircle2, ChevronRight, X, AlertTriangle, MonitorPlay, Radar, Zap, Maximize2, Play, Pause, VolumeX, Volume2, Square, RotateCcw } from 'lucide-react';
 import Button from '../components/Button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/Card';
 import Modal from '../components/Modal';
@@ -819,77 +819,114 @@ financial decisions, risk planning, and educational study results.
     document.body.removeChild(link);
   };
 
-  // Helper to generate the 9 lesson steps from the active analysis snapshot
+  // Helper to retrieve tool-specific educational explanations
+  const getToolSpecificBreakdown = (toolId, snap) => {
+    const price = snap?.candles ? snap.candles[snap.candles.length - 1]?.close : null;
+    const tool = toolId?.toLowerCase() || '';
+
+    const toolMap = {
+      rsi: {
+        toolText: "Relative Strength Index tracks price momentum by checking speed and change of price movements.",
+        keyZonesText: "The current RSI value represents market momentum. We monitor the 30 oversold floor and the 70 overbought ceiling to determine if the trend is stretched."
+      },
+      macd: {
+        toolText: "Moving Average Convergence Divergence checks the relation between trend averages to reveal momentum strength.",
+        keyZonesText: "Observe the MACD line crossovers and watch signal line dynamics. The histogram thickness reflects the strength or weakness of the momentum."
+      },
+      bollinger_bands: {
+        toolText: "Bollinger Bands measure volatility by setting standard deviation bands around a central average line.",
+        keyZonesText: "Watch the bands. A squeeze indicates contraction and potential expansion, while price touching the outer bands indicates high volatility."
+      },
+      sma: {
+        toolText: "Simple Moving Average calculates average price to smooth trends and identify support levels.",
+        keyZonesText: "Staying above the average line confirms a steady upward trend. Crossing below suggest rising seller pressure."
+      },
+      ema: {
+        toolText: "Exponential Moving Average smooths price trends by placing higher weight on recent price activity.",
+        keyZonesText: "Staying above the average line confirms a steady upward trend. Crossing below suggest rising seller pressure."
+      },
+      trendline: {
+        toolText: "Trendlines track swing highs or swing lows to identify support and resistance along a diagonal slope.",
+        keyZonesText: "Observe how price reacts to the trendline. Respecting the line confirms the trend, whereas a breakout warns of a trend shift."
+      },
+      volume: {
+        toolText: "Volume analysis measures absolute trading activity to validate price trend sustainability.",
+        keyZonesText: "Expanding volume on price advances confirms participation. Diverging volume indicates weakening buyer interest."
+      },
+      horizontal_sr: {
+        toolText: "Horizontal Support and Resistance zones track historic price coordinates where buyers and sellers previously balanced.",
+        keyZonesText: `Support zones sit below the current price of ${price ? price.toFixed(2) : 'the asset'}. Resistance zones sit above, marking potential price ceilings.`
+      },
+      candlestick_patterns: {
+        toolText: "Candlestick Patterns analyze single or multiple price candles to identify immediate shift signals in buyer-seller balance.",
+        keyZonesText: "We check the body-to-wick ratio of the latest candles. Follow-through candle confirmation is required to validate the pattern."
+      }
+    };
+
+    return toolMap[tool] || {
+      toolText: "Technical indicators track historic price structures to calculate potential reaction levels.",
+      keyZonesText: "We monitor historical swing points and indicators boundaries to gauge buyer and seller strength."
+    };
+  };
+
+  // Helper to generate the 8 lesson steps from the active analysis snapshot
   const generateVideoSteps = (snap) => {
     if (!snap) return [];
 
     const symbol = snap.symbol || 'Asset';
     const timeframe = snap.timeframe || '1h';
     const toolName = snap.toolName || 'technical indicators';
+    const provider = snap.mode === 'binance' ? 'Binance Spot' : (snap.mode === 'twelvedata' ? 'Twelve Data' : 'Demo Feed');
+    const toolBreakdown = getToolSpecificBreakdown(snap.toolId, snap);
 
     return [
       {
-        title: "1. Asset & Study Setup",
-        caption: `Welcome to this technical analysis session on ${symbol} (${timeframe}) analyzing the ${toolName} indicator.`,
-        detailedExplanation: `We are initiating a technical study session. The parameters are locked: Symbol is ${symbol}, Timeframe is ${timeframe}, and the active analytical overlay is ${toolName}. All data is simulated for classroom review and does not constitute financial advice.`,
-        narration: `Welcome to this technical analysis session on ${symbol} on the ${timeframe} chart. Today we are studying the ${toolName} indicator.`,
-        target: { type: 'price', value: snap.candles ? snap.candles[snap.candles.length - 1]?.close : 50 }
+        title: "1. Intro",
+        caption: "Let’s break down this MarketPilot AI scan step by step.",
+        detailedExplanation: "Welcome to this technical analysis guided lesson. We are starting a step-by-step educational walkthrough to review the calculations and patterns locked in your latest chart scan.",
+        narration: "Let's break down this MarketPilot AI scan step by step."
       },
       {
-        title: "2. Chart & Price Overview",
-        caption: "The chart displays candles representing recent lookback activity.",
-        detailedExplanation: "Observing the general layout of the chart, recent history shows price movements between established boundaries. The candlestick body sizes and wick extensions provide structural clues about market interest.",
-        narration: "Looking at the general layout, recent history shows price movements between established boundaries. The body sizes and wick extensions provide clues about market interest.",
-        target: { type: 'price', value: snap.candles ? snap.candles[Math.max(0, snap.candles.length - 15)]?.close : 50 }
+        title: "2. Market Context",
+        caption: `Symbol: ${symbol} (${timeframe}) | Feed: ${provider}`,
+        detailedExplanation: `This technical study is configured for the asset symbol ${symbol} using the ${timeframe} timeframe. The active market data feed is sourced from ${provider}.`,
+        narration: `This scan is for ${symbol} on the ${timeframe} timeframe, using ${provider} data.`
       },
       {
-        title: "3. Primary Observation",
+        title: "3. Selected Tool",
+        caption: `Indicator: ${toolName}`,
+        detailedExplanation: toolBreakdown.toolText,
+        narration: `The selected tool is ${toolName}. ${toolBreakdown.toolText}`
+      },
+      {
+        title: "4. Main Observation",
         caption: snap.mainObservation || "Reviewing key price patterns.",
         detailedExplanation: `Our primary educational observation is: ${snap.mainObservation || 'The chart is interacting with established support and resistance vectors.'} This pattern highlights where buyers and sellers have historically balanced.`,
-        narration: `Our primary observation is: ${snap.mainObservation || 'The chart is interacting with established support and resistance vectors.'}`,
-        target: { type: 'price', value: snap.candles ? snap.candles[Math.max(0, snap.candles.length - 5)]?.close : 50 }
+        narration: `Our main observation is: ${snap.mainObservation || 'The chart is interacting with established support and resistance vectors.'}`
       },
       {
-        title: "4. Analytical Tool Reading",
-        caption: snap.selectedToolReading || "The active indicator is displaying neutral values.",
-        detailedExplanation: `The active technical tool (${toolName}) is calculated as follows: ${snap.selectedToolReading || 'The reading is in a neutral, balanced zone.'} This shows the relative strength, momentum, or volatility of recent candles.`,
-        narration: `The calculated reading for ${toolName} is: ${snap.selectedToolReading || 'The reading is in a neutral, balanced zone.'}`,
-        target: { type: 'indicator', value: snap.toolId }
+        title: "5. Key Zones",
+        caption: "Analyzing price relative to indicator levels.",
+        detailedExplanation: toolBreakdown.keyZonesText,
+        narration: toolBreakdown.keyZonesText
       },
       {
-        title: "5. Key Watch Zones",
-        caption: `Monitoring critical price zones: ${snap.keyWatchZones || 'Support and resistance limits.'}`,
-        detailedExplanation: `We identify major watch levels: ${snap.keyWatchZones || 'Support and resistance boundaries.'} These support and resistance thresholds act as key levels to watch for potential rejection or expansion scenarios.`,
-        narration: `We are monitoring key structural levels: ${snap.keyWatchZones || 'Support and resistance boundaries.'}`,
-        target: { type: 'price', value: snap.candles ? snap.candles[snap.candles.length - 1]?.close : 50 }
+        title: "6. Scenario Cases",
+        caption: "Upside, downside, and sideways path structures.",
+        detailedExplanation: `Upside Scenario: ${snap.upsideCase?.explanation || 'Watch resistance breakout.'} (Clarity: ${snap.upsideCase?.clarity || 'Medium'}, Risk: ${snap.upsideCase?.risk || 'Medium'}, Confirmation: ${snap.upsideCase?.confirmation || 'Yes'}).\nDownside Scenario: ${snap.downsideCase?.explanation || 'Watch support retest.'} (Clarity: ${snap.downsideCase?.clarity || 'Medium'}, Risk: ${snap.downsideCase?.risk || 'Medium'}, Confirmation: ${snap.downsideCase?.confirmation || 'Yes'}).\nSideways Scenario: ${snap.sidewaysCase?.explanation || 'Range bound fluctuate'}.`,
+        narration: `We analyze three simulated scenario cases. The upside case is ${snap.upsideCase?.explanation || 'watch resistance ceiling'} with a clarity of ${snap.upsideCase?.clarity || 'medium'} percent and ${snap.upsideCase?.risk || 'medium'} risk. The downside case is ${snap.downsideCase?.explanation || 'watch support floor'} with a clarity of ${snap.downsideCase?.clarity || 'medium'} percent. The sideways case is ${snap.sidewaysCase?.explanation || 'price fluctuates in a range'}. Remember, clarity and risk levels are educational estimates.`
       },
       {
-        title: "6. Simulated Upside Case",
-        caption: `Upside Scenario: ${snap.upsideCase?.explanation || 'Watch for potential consolidation above resistance.'}`,
-        detailedExplanation: `Under a simulated upside continuation scenario: ${snap.upsideCase?.explanation || 'A price breakout above the resistance ceiling requires expanding volume confirmation.'} (Estimated Clarity: ${snap.upsideCase?.clarity || 'Medium'}, Risk Profile: ${snap.upsideCase?.risk || 'Medium'}, Confirmation required: ${snap.upsideCase?.confirmation || 'Yes'}).`,
-        narration: `Under a simulated upside continuation scenario, ${snap.upsideCase?.explanation || 'watch for a potential push above resistance.'}`,
-        target: { type: 'price', value: snap.candles ? snap.candles[snap.candles.length - 1]?.close * 1.03 : 55 }
+        title: "7. Risk Note",
+        caption: "Educational only. Not financial advice. No buy/sell signal.",
+        detailedExplanation: "MarketPilot AI is an educational study simulator. Technical indicators and overlays are simulated calculations based on lookback coordinates for analysis purposes only. This walkthrough does not constitute financial advice, trading recommendations, or buy or sell signals.",
+        narration: "Important note. This guided lesson is educational only. It is not financial advice, and does not provide buy or sell signals."
       },
       {
-        title: "7. Simulated Downside Case",
-        caption: `Downside Scenario: ${snap.downsideCase?.explanation || 'Watch for potential stabilization near support levels.'}`,
-        detailedExplanation: `Under a simulated downside pullback scenario: ${snap.downsideCase?.explanation || 'A price slip below the support floor points to potential corrective testing.'} (Estimated Clarity: ${snap.downsideCase?.clarity || 'Medium'}, Risk Profile: ${snap.downsideCase?.risk || 'Medium'}, Confirmation required: ${snap.downsideCase?.confirmation || 'Yes'}).`,
-        narration: `Under a simulated downside pullback scenario, ${snap.downsideCase?.explanation || 'watch for a potential test of support.'}`,
-        target: { type: 'price', value: snap.candles ? snap.candles[snap.candles.length - 1]?.close * 0.97 : 45 }
-      },
-      {
-        title: "8. Sideways Consolidation Case",
-        caption: `Sideways Scenario: ${snap.sidewaysCase?.explanation || 'Price fluctuates within a narrow channel.'}`,
-        detailedExplanation: `Under a simulated sideways or rangebound consolidation case: ${snap.sidewaysCase?.explanation || 'Price is expected to bounce between support and resistance.'} (Estimated Clarity: ${snap.sidewaysCase?.clarity || 'High'}, Risk Profile: ${snap.sidewaysCase?.risk || 'Low'}, Confirmation required: ${snap.sidewaysCase?.confirmation || 'No'}).`,
-        narration: `Under a simulated sideways case, ${snap.sidewaysCase?.explanation || 'price fluctuates within a narrow channel.'}`,
-        target: { type: 'price', value: snap.candles ? snap.candles[snap.candles.length - 1]?.close : 50 }
-      },
-      {
-        title: "9. Study Risk & Conclusion",
-        caption: `Compliance: ${snap.riskNote || 'Relying on a single technical tool can lead to false readings.'}`,
-        detailedExplanation: `Technical parameters and indicators have inherent limits. ${snap.riskNote || 'Relying on a single technical indicator without checking overall structure or volume can lead to false interpretations.'} Always apply prudent risk controls and study multiple indicators together.`,
-        narration: `Remember, technical indicators have inherent limits. ${snap.riskNote || 'Relying on a single technical indicator without checking overall structure or volume can lead to false interpretations.'}`,
-        target: { type: 'price', value: snap.candles ? snap.candles[snap.candles.length - 1]?.close : 50 }
+        title: "8. Conclusion",
+        caption: "What to watch next educationally.",
+        detailedExplanation: "This concludes the guided breakdown. In your next studies, monitor candle closes relative to the support and resistance boundaries identified here before interpreting the next move.",
+        narration: "In conclusion. What to watch next educationally is how price reacts near the marked zones before interpreting the next move."
       }
     ];
   };
@@ -897,18 +934,39 @@ financial decisions, risk planning, and educational study results.
   // Upgraded speech states
   const [isMuted, setIsMuted] = useState(false);
   const [isTextOnlyMode, setIsTextOnlyMode] = useState(false);
-  const [speechRate, setSpeechRate] = useState(0.9);
+  const [speechRate, setSpeechRate] = useState(() => {
+    const saved = localStorage.getItem('marketpilot_video_speed');
+    const parsed = saved ? parseFloat(saved) : 1.0;
+    return (parsed >= 0.2 && parsed <= 3.0) ? parsed : 1.0;
+  });
+  const [customSpeedVal, setCustomSpeedVal] = useState(() => {
+    const saved = localStorage.getItem('marketpilot_video_speed');
+    const parsed = saved ? parseFloat(saved) : 1.0;
+    return (parsed >= 0.2 && parsed <= 3.0) ? parsed.toString() : '1.0';
+  });
+  
+  const isPreset = (rate) => [0.2, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0].includes(rate);
+  const [showCustomSpeedInput, setShowCustomSpeedInput] = useState(() => !isPreset(speechRate));
+  const [isLessonCompleted, setIsLessonCompleted] = useState(false);
+  const [voiceCompatibilitySupported, setVoiceCompatibilitySupported] = useState(true);
   const [selectedVoiceName, setSelectedVoiceName] = useState('');
   const [availableVoices, setAvailableVoices] = useState([]);
 
   const synthRef = useRef(null);
   const utteranceRef = useRef(null);
   const timerRef = useRef(null);
+  const speechRateRef = useRef(1.0);
+
+  // Sync speech rate ref
+  useEffect(() => {
+    speechRateRef.current = speechRate;
+  }, [speechRate]);
 
   // Initialize SpeechSynthesis and load voices
   useEffect(() => {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       synthRef.current = window.speechSynthesis;
+      setVoiceCompatibilitySupported(true);
 
       const loadVoices = () => {
         const voices = window.speechSynthesis.getVoices();
@@ -916,7 +974,6 @@ financial decisions, risk planning, and educational study results.
         setAvailableVoices(engVoices);
         
         if (engVoices.length > 0) {
-          // Sort or find preferred voice names containing high-quality keywords
           const preferred = engVoices.find(v => 
             v.name.includes('Google') || 
             v.name.includes('Natural') || 
@@ -934,6 +991,8 @@ financial decisions, risk planning, and educational study results.
       if (window.speechSynthesis.onvoiceschanged !== undefined) {
         window.speechSynthesis.onvoiceschanged = loadVoices;
       }
+    } else {
+      setVoiceCompatibilitySupported(false);
     }
   }, []);
 
@@ -947,7 +1006,7 @@ financial decisions, risk planning, and educational study results.
   // Voice synthesis utterance launcher
   const speakText = (text, onEnd = null) => {
     stopSpeaking();
-    if (!synthRef.current || isMuted || isTextOnlyMode) {
+    if (!synthRef.current || isMuted || isTextOnlyMode || !voiceCompatibilitySupported) {
       if (onEnd) onEnd();
       return;
     }
@@ -963,7 +1022,7 @@ financial decisions, risk planning, and educational study results.
         }
       }
       
-      utterance.rate = speechRate; // speech speed rate controller
+      utterance.rate = speechRateRef.current; // speech speed rate controller
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
       
@@ -989,6 +1048,8 @@ financial decisions, risk planning, and educational study results.
     setVideoStepIdx(0);
     setIsVideoOpen(true);
     setIsVideoPlaying(false);
+    setIsLessonCompleted(false);
+    setShowCustomSpeedInput(!isPreset(speechRate));
   };
 
   // Function to execute current step audio/timeout
@@ -1004,16 +1065,32 @@ financial decisions, risk planning, and educational study results.
 
     const currentStep = steps[videoStepIdx];
 
+    // Scroll active step card into view
+    const cardEl = document.getElementById(`video-step-${videoStepIdx}`);
+    if (cardEl) {
+      cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
     if (isVideoPlaying) {
-      if (isMuted || isTextOnlyMode) {
-        // Fallback timer: 7 seconds if muted or text-only
+      const rate = speechRateRef.current;
+      const useFallbackTiming = isMuted || isTextOnlyMode || !synthRef.current || !voiceCompatibilitySupported;
+      
+      if (useFallbackTiming) {
+        // Fallback timer: word count / (2.5 words/sec * speedRate)
+        const wordCount = currentStep.narration.split(/\s+/).length;
+        const baseDuration = (wordCount / 2.5) * 1000;
+        const adjustedDuration = Math.max(3000, Math.min(15000, baseDuration / rate));
+        
         timerRef.current = setTimeout(() => {
           advanceNextStep();
-        }, 7000);
+        }, adjustedDuration);
       } else {
         // Speak narration
         speakText(currentStep.narration, () => {
-          advanceNextStep();
+          // Pause slightly before moving to next step
+          timerRef.current = setTimeout(() => {
+            advanceNextStep();
+          }, 800 / rate);
         });
       }
     }
@@ -1025,6 +1102,7 @@ financial decisions, risk planning, and educational study results.
       setVideoStepIdx(prev => prev + 1);
     } else {
       setIsVideoPlaying(false);
+      setIsLessonCompleted(true);
     }
   };
 
@@ -1035,17 +1113,41 @@ financial decisions, risk planning, and educational study results.
       setVideoStepIdx(prev => prev + 1);
     } else {
       setIsVideoPlaying(false);
+      setIsLessonCompleted(true);
     }
   };
 
   const handlePrevStep = () => {
+    setIsLessonCompleted(false);
     if (videoStepIdx > 0) {
       setVideoStepIdx(prev => prev - 1);
     }
   };
 
   const handleTogglePlayPause = () => {
-    setIsVideoPlaying(prev => !prev);
+    if (isLessonCompleted) {
+      handleRestartLesson();
+      return;
+    }
+
+    if (isVideoPlaying) {
+      // Pause
+      setIsVideoPlaying(false);
+      if (synthRef.current && synthRef.current.speaking && !isMuted && !isTextOnlyMode) {
+        synthRef.current.pause();
+      }
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    } else {
+      // Play / Resume
+      setIsVideoPlaying(true);
+      if (synthRef.current && synthRef.current.paused && !isMuted && !isTextOnlyMode) {
+        synthRef.current.resume();
+      } else {
+        playCurrentStep();
+      }
+    }
   };
 
   const handleRestartLesson = () => {
@@ -1055,20 +1157,165 @@ financial decisions, risk planning, and educational study results.
     }
     setVideoStepIdx(0);
     setIsVideoPlaying(true);
+    setIsLessonCompleted(false);
   };
 
   // Synced voice controller effect
   useEffect(() => {
-    // Disabled speech and timers to satisfy static walkthrough requirements
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
+    if (isVideoOpen && isVideoPlaying && !isStale) {
+      playCurrentStep();
+    } else {
+      stopSpeaking();
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
     }
     return () => {
-      if (typeof window !== 'undefined' && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
+      stopSpeaking();
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
       }
     };
-  }, []);
+  }, [isVideoOpen, isVideoPlaying, videoStepIdx, isMuted, isTextOnlyMode, selectedVoiceName, isStale]);
+
+  const handleCustomSpeedChange = (val) => {
+    setCustomSpeedVal(val);
+    const parsed = parseFloat(val);
+    if (!isNaN(parsed)) {
+      if (parsed >= 0.2 && parsed <= 3.0) {
+        setSpeechRate(parsed);
+        localStorage.setItem('marketpilot_video_speed', parsed.toString());
+      }
+    }
+  };
+
+  const handleCustomSpeedBlur = () => {
+    const parsed = parseFloat(customSpeedVal);
+    if (isNaN(parsed) || parsed < 0.2 || parsed > 3.0) {
+      setCustomSpeedVal('1.0');
+      setSpeechRate(1.0);
+      localStorage.setItem('marketpilot_video_speed', '1.0');
+    }
+  };
+
+  const handleSelectPresetSpeed = (rate) => {
+    setSpeechRate(rate);
+    setCustomSpeedVal(rate.toString());
+    localStorage.setItem('marketpilot_video_speed', rate.toString());
+  };
+
+  const handleCloseVideoBreakdown = () => {
+    setIsVideoOpen(false);
+    setIsVideoPlaying(false);
+    stopSpeaking();
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+  };
+
+  const renderMiniChartPreview = (snap) => {
+    const candlesToUse = snap?.candles || [];
+    const symbol = snap?.symbol || 'Asset';
+    const timeframe = snap?.timeframe || '1h';
+    const toolName = snap?.toolName || 'Technical Indicators';
+    const provider = isStale ? 'Previous scan source' : (snap?.mode === 'binance' ? 'Binance Spot Market Data' : (snap?.mode === 'twelvedata' ? 'Twelve Data' : 'Demo Feed'));
+
+    if (candlesToUse.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center p-6 text-center bg-slate-900/40 border border-slate-850 rounded-xl h-full w-full space-y-3 font-sans">
+          <div className="p-2.5 rounded-full bg-slate-950/80 border border-slate-800/60 shadow-inner">
+            <MonitorPlay className="w-6 h-6 text-purple-400/80" />
+          </div>
+          <div className="space-y-1">
+            <h5 className="text-xs font-bold text-slate-200 tracking-wide uppercase">Chart preview unavailable</h5>
+            <p className="text-[10px] text-slate-400 max-w-[85%] mx-auto leading-relaxed font-sans">
+              This guided lesson uses the latest scan text and scenario data.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-2 text-left text-[10px] text-slate-400 w-full max-w-[240px] pt-2.5 border-t border-slate-800/30">
+            <div>
+              <span className="text-[9px] text-slate-500 uppercase tracking-wider block font-semibold">Symbol</span>
+              <span className="font-mono font-bold text-slate-300">{symbol}</span>
+            </div>
+            <div>
+              <span className="text-[9px] text-slate-500 uppercase tracking-wider block font-semibold">Timeframe</span>
+              <span className="font-mono font-bold text-slate-300">{timeframe}</span>
+            </div>
+            <div>
+              <span className="text-[9px] text-slate-500 uppercase tracking-wider block font-semibold">Tool</span>
+              <span className="font-semibold text-slate-300 truncate block">{toolName}</span>
+            </div>
+            <div>
+              <span className="text-[9px] text-slate-500 uppercase tracking-wider block font-semibold">Provider</span>
+              <span className="font-semibold text-slate-300 truncate block">{provider}</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const sliceCandles = candlesToUse.slice(-20);
+    const minPrice = Math.min(...sliceCandles.map(c => c.low));
+    const maxPrice = Math.max(...sliceCandles.map(c => c.high));
+    const priceDiff = maxPrice - minPrice || 1;
+
+    const width = 400;
+    const height = 200;
+    const padding = 20;
+
+    const getX = (index) => padding + (index * (width - padding * 2) / (sliceCandles.length - 1 || 1));
+    const getY = (price) => height - padding - ((price - minPrice) * (height - padding * 2) / priceDiff);
+
+    return (
+      <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`} className="w-full h-full select-none">
+        {/* Grid lines */}
+        {[0, 0.25, 0.5, 0.75, 1].map((p, i) => (
+          <line
+            key={i}
+            x1={padding}
+            y1={padding + p * (height - padding * 2)}
+            x2={width - padding}
+            y2={padding + p * (height - padding * 2)}
+            stroke="#1e293b"
+            strokeWidth="0.5"
+            strokeDasharray="2,2"
+          />
+        ))}
+
+        {/* Candles */}
+        {sliceCandles.map((c, i) => {
+          const x = getX(i);
+          const yOpen = getY(c.open);
+          const yClose = getY(c.close);
+          const yHigh = getY(c.high);
+          const yLow = getY(c.low);
+          
+          const isBull = c.close >= c.open;
+          const stroke = isBull ? '#10b981' : '#ef4444';
+          const fill = isBull ? '#10b981' : '#ef4444';
+          
+          const bodyW = 6;
+          const bodyH = Math.max(1.5, Math.abs(yOpen - yClose));
+          const bodyY = Math.min(yOpen, yClose);
+
+          return (
+            <g key={i}>
+              <line x1={x} y1={yHigh} x2={x} y2={yLow} stroke={stroke} strokeWidth="1" />
+              <rect x={x - bodyW/2} y={bodyY} width={bodyW} height={bodyH} fill={fill} stroke={stroke} strokeWidth="0.5" rx="0.5" />
+            </g>
+          );
+        })}
+
+        {/* Support and Resistance visualization */}
+        <line x1={padding} y1={getY(minPrice * 1.01)} x2={width - padding} y2={getY(minPrice * 1.01)} stroke="#06b6d4" strokeWidth="1" strokeDasharray="3,3" />
+        <text x={padding + 10} y={getY(minPrice * 1.01) - 4} fill="#06b6d4" fontSize="8" fontWeight="bold">Support Zone</text>
+
+        <line x1={padding} y1={getY(maxPrice * 0.99)} x2={width - padding} y2={getY(maxPrice * 0.99)} stroke="#f59e0b" strokeWidth="1" strokeDasharray="3,3" />
+        <text x={padding + 10} y={getY(maxPrice * 0.99) + 10} fill="#f59e0b" fontSize="8" fontWeight="bold">Resistance Zone</text>
+      </svg>
+    );
+  };
 
   // Load from snapshot (kept visible even if settings differ or live data updates)
   const displayResult = analysisResult || activeAnalysisSnapshot;
@@ -1471,20 +1718,27 @@ financial decisions, risk planning, and educational study results.
                 <Button
                   variant="glass"
                   size="sm"
-                  disabled={!activeAnalysisSnapshot}
+                  disabled={!activeAnalysisSnapshot || isStale}
                   onClick={handleOpenVideoBreakdown}
                   className={`rounded-xl transition h-8 text-xs px-3 ${
                     !activeAnalysisSnapshot
                       ? 'opacity-50 cursor-not-allowed border-slate-800 text-slate-500 bg-slate-950/60'
-                      : 'border-purple-500/20 text-purple-400 hover:bg-purple-500/10'
+                      : isStale
+                        ? 'opacity-60 cursor-not-allowed border-amber-500/20 text-amber-500/80 bg-slate-950/40 hover:bg-transparent'
+                        : 'border-purple-500/20 text-purple-400 hover:bg-purple-500/10'
                   }`}
                   icon={MonitorPlay}
                 >
                   Video Breakdown
                 </Button>
+                {isStale && activeAnalysisSnapshot && (
+                  <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-amber-400 text-[10px] px-2.5 py-1 rounded-lg border border-amber-500/25 whitespace-nowrap shadow-xl z-20 font-sans">
+                    Run updated scan first.
+                  </span>
+                )}
                 {!activeAnalysisSnapshot && (
                   <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-slate-300 text-[10px] px-2.5 py-1 rounded-lg border border-darkBorder whitespace-nowrap shadow-xl z-20 font-sans">
-                    Run scan analysis first
+                    Run Scan Analysis first to generate a video breakdown.
                   </span>
                 )}
               </div>
@@ -1924,62 +2178,375 @@ financial decisions, risk planning, and educational study results.
         </div>
       </Modal>
       {/* 5. Narrated Video Walkthrough Lesson Modal */}
+      {/* 5. Narrated Video Walkthrough Lesson Modal */}
       <Modal
         isOpen={isVideoOpen}
-        onClose={() => setIsVideoOpen(false)}
-        title={`Video Breakdown: Technical Study on ${activeAnalysisSnapshot?.symbol}`}
-        size="lg"
+        onClose={handleCloseVideoBreakdown}
+        title="AI Video Breakdown"
+        size="xl"
         showClose={true}
       >
         {(() => {
           if (!activeAnalysisSnapshot) return null;
 
           const steps = generateVideoSteps(activeAnalysisSnapshot);
+          if (steps.length === 0) return null;
+
+          const currentStep = steps[Math.min(videoStepIdx, steps.length - 1)];
+          const feedName = isStale ? 'Previous scan source' : (activeAnalysisSnapshot.mode === 'binance' ? 'Binance Spot Market Data' : (activeAnalysisSnapshot.mode === 'twelvedata' ? 'Twelve Data' : 'Demo Feed'));
 
           return (
-            <div className="space-y-6 text-slate-300">
-              <div className="flex items-center justify-between bg-[#111726]/80 border border-purple-500/25 px-4 py-3 rounded-xl">
+            <div className="space-y-5 text-slate-300">
+              {/* Header Subtitle and Metadata Row */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-darkBorder/40 pb-3 -mt-2">
+                <div>
+                  <p className="text-xs text-slate-400 font-sans">Educational walkthrough of the latest scan — not financial advice.</p>
+                </div>
                 <div className="flex items-center gap-2">
-                  <MonitorPlay className="w-5 h-5 text-purple-400" />
-                  <div>
-                    <h4 className="text-sm font-bold text-white uppercase tracking-wider">Lesson Walkthrough Notes</h4>
-                    <p className="text-xs text-slate-400 mt-0.5">Educational step-by-step breakdown for {activeAnalysisSnapshot.symbol} ({activeAnalysisSnapshot.timeframe})</p>
+                  <Badge variant="cyan" className="font-mono text-[10px] uppercase py-0.5 px-2">
+                    {activeAnalysisSnapshot.toolName}
+                  </Badge>
+                  <span className="text-[10px] text-slate-500 font-mono">
+                    {activeAnalysisSnapshot.symbol} ({activeAnalysisSnapshot.timeframe}) | Feed: {feedName}
+                  </span>
+                </div>
+              </div>
+
+              {/* Warning Banner if stale */}
+              {isStale && (
+                <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/25 px-4 py-2.5 rounded-xl text-amber-400 text-xs shadow-sm">
+                  <AlertTriangle className="w-4 h-4 shrink-0 animate-pulse text-amber-500" />
+                  <span className="font-medium">Chart changed. Run updated scan to refresh this breakdown.</span>
+                </div>
+              )}
+
+              {/* Two Column Layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                {/* LEFT COLUMN: Visual screen & Playback controller */}
+                <div className="lg:col-span-7 space-y-4">
+                  {/* Virtual Video Screen / SVG Preview */}
+                  <div className="relative aspect-video rounded-2xl bg-slate-950/90 border border-slate-800/80 flex flex-col items-center justify-center overflow-hidden shadow-inner group">
+                    {/* SVG Chart Preview */}
+                    <div className="absolute inset-0 p-4 pb-14 flex items-center justify-center bg-radial-gradient">
+                      {renderMiniChartPreview(activeAnalysisSnapshot)}
+                    </div>
+
+                    {/* Translucent overlay caption box */}
+                    <div className="absolute bottom-3 inset-x-3 bg-black/80 border border-white/5 p-2.5 rounded-xl text-center shadow-lg backdrop-blur-sm">
+                      <p className="text-xs font-semibold text-slate-100 tracking-wide leading-relaxed animate-fade-in">
+                        {currentStep.caption}
+                      </p>
+                    </div>
+
+                    {/* Glossy Grid Scan Effect overlay if playing */}
+                    {isVideoPlaying && !isStale && (
+                      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent animate-scan z-10" />
+                    )}
+                  </div>
+
+                  {/* Playback Controls & Progress bar */}
+                  <div className="bg-[#111726]/40 border border-darkBorder/40 p-4 rounded-2xl space-y-3.5">
+                    {/* Progress Bar & Indicators */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center text-[10px] text-slate-400 font-mono">
+                        <span className="text-cyan-400 font-semibold uppercase tracking-wider">
+                          {isStale ? "Analysis Stale" : isLessonCompleted ? "Lesson Completed" : isVideoPlaying ? "Playing Walkthrough" : "Walkthrough Paused"}
+                        </span>
+                        <span>
+                          Section {videoStepIdx + 1} of {steps.length}
+                        </span>
+                      </div>
+                      <div className="relative w-full h-1.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800/60">
+                        <div 
+                          className="h-full bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full transition-all duration-300 shadow-[0_0_8px_rgba(6,182,212,0.4)]"
+                          style={{ width: `${isLessonCompleted ? 100 : Math.round(((videoStepIdx + 1) / steps.length) * 100)}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Audio & Settings Buttons line */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                      {/* Left: Media Action buttons */}
+                      <div className="flex items-center gap-2">
+                        {isStale ? (
+                          <button
+                            onClick={() => {
+                              handleCloseVideoBreakdown();
+                              handleRunAnalysis();
+                            }}
+                            className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 text-xs font-bold px-4 py-1.5 rounded-xl transition cursor-pointer shadow-md shadow-orange-950/20"
+                          >
+                            <Zap className="w-3.5 h-3.5 text-slate-950 animate-bounce" />
+                            Run Updated Scan
+                          </button>
+                        ) : (
+                          <>
+                            {/* Play/Pause/Resume */}
+                            {isLessonCompleted ? (
+                              <button
+                                onClick={handleRestartLesson}
+                                className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-500 active:bg-purple-700 text-white text-xs font-semibold px-4 py-1.5 rounded-xl transition cursor-pointer shadow-md shadow-purple-900/30"
+                              >
+                                <RotateCcw className="w-3.5 h-3.5" />
+                                Restart
+                              </button>
+                            ) : isVideoPlaying ? (
+                              <button
+                                onClick={handleTogglePlayPause}
+                                className="flex items-center gap-1.5 bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-700 text-white text-xs font-semibold px-4 py-1.5 rounded-xl transition cursor-pointer shadow-md shadow-cyan-900/30"
+                              >
+                                <Pause className="w-3.5 h-3.5" />
+                                Pause
+                              </button>
+                            ) : (
+                              <button
+                                onClick={handleTogglePlayPause}
+                                className="flex items-center gap-1.5 bg-cyan-500 hover:bg-cyan-400 active:bg-cyan-600 text-slate-950 text-xs font-semibold px-4 py-1.5 rounded-xl transition cursor-pointer shadow-md shadow-cyan-500/20"
+                              >
+                                <Play className="w-3.5 h-3.5 fill-slate-950" />
+                                {videoStepIdx > 0 ? "Resume" : "Play Lesson"}
+                              </button>
+                            )}
+
+                            {/* Reset / Stop (visible when playing or paused, but not on step 0 if not playing) */}
+                            {(isVideoPlaying || videoStepIdx > 0) && !isLessonCompleted && (
+                              <button
+                                onClick={handleRestartLesson}
+                                className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-slate-300 border border-slate-700/60 text-xs font-semibold px-3 py-1.5 rounded-xl transition cursor-pointer"
+                                title="Reset Lesson to Step 1"
+                              >
+                                <Square className="w-3 h-3 fill-slate-300" />
+                                Stop
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
+
+                      {/* Right: Audio options & Speed Controls */}
+                      <div className="flex items-center gap-3">
+                        {/* Text Only / Mute Toggle */}
+                        <div className="flex items-center gap-1.5 border-r border-slate-800/80 pr-3">
+                          {/* Audio Toggle */}
+                          <button
+                            onClick={() => setIsMuted(prev => !prev)}
+                            disabled={isStale}
+                            className={`p-1.5 rounded-lg border transition cursor-pointer ${
+                              isMuted 
+                                ? 'bg-slate-950 border-slate-800 text-slate-500 hover:text-slate-300' 
+                                : 'bg-slate-900/60 border-slate-800 text-cyan-400 hover:bg-slate-800/50'
+                            } ${isStale ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            title={isMuted ? "Unmute Voice Narration" : "Mute Voice Narration"}
+                          >
+                            {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                          </button>
+
+                          {/* Text Only Switch */}
+                          <button
+                            onClick={() => setIsTextOnlyMode(prev => !prev)}
+                            disabled={isStale}
+                            className={`text-[10px] font-semibold px-2 py-1 rounded-lg border transition cursor-pointer ${
+                              isTextOnlyMode
+                                ? 'bg-purple-950/20 border-purple-500/20 text-purple-400'
+                                : 'bg-slate-950 border-slate-850 text-slate-400 hover:text-slate-200'
+                            } ${isStale ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            title="Toggle text-only layout with simulated intervals"
+                          >
+                            {isTextOnlyMode ? "Text Only" : "Text + Voice"}
+                          </button>
+                        </div>
+
+                        {/* Speed dropdown wrapper */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-slate-400 uppercase tracking-wider font-mono font-bold">Speed:</span>
+                          <select
+                            value={isPreset(speechRate) ? speechRate.toString() : 'custom'}
+                            disabled={isStale}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === 'custom') {
+                                setShowCustomSpeedInput(true);
+                              } else {
+                                setShowCustomSpeedInput(false);
+                                const rate = parseFloat(val);
+                                handleSelectPresetSpeed(rate);
+                              }
+                            }}
+                            className={`bg-slate-950 border border-slate-800 rounded-xl text-xs px-2.5 py-1 text-slate-300 focus:outline-none focus:border-cyan-500 cursor-pointer shadow-sm animate-fade-in ${
+                              isStale ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
+                          >
+                            <option value="0.2">0.2x Very Slow</option>
+                            <option value="0.5">0.5x Slow</option>
+                            <option value="1">1x Normal</option>
+                            <option value="1.5">1.5x Faster</option>
+                            <option value="2">2x Fast</option>
+                            <option value="2.5">2.5x Very Fast</option>
+                            <option value="3">3x Max</option>
+                            <option value="custom">Custom...</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Custom Speed Slider/Input Box */}
+                    {showCustomSpeedInput && !isStale && (
+                      <div className="flex items-center justify-between gap-3 bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/80 animate-slide-down">
+                        <span className="text-[10px] text-slate-400 font-medium">Drag or enter custom speed (0.2x - 3.0x):</span>
+                        <div className="flex items-center gap-2.5">
+                          <input
+                            type="range"
+                            min="0.2"
+                            max="3"
+                            step="0.1"
+                            value={speechRate}
+                            onChange={(e) => handleCustomSpeedChange(e.target.value)}
+                            className="w-24 h-1 bg-slate-900 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+                          />
+                          <input
+                            type="number"
+                            min="0.2"
+                            max="3"
+                            step="0.05"
+                            value={customSpeedVal}
+                            onChange={(e) => handleCustomSpeedChange(e.target.value)}
+                            onBlur={handleCustomSpeedBlur}
+                            className="bg-slate-900 border border-slate-800 rounded-lg px-1.5 py-0.5 text-xs text-white w-14 text-center focus:outline-none focus:border-cyan-500 font-mono font-bold"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Active Step Detailed Text Box */}
+                  <div className="bg-[#111726]/30 border border-darkBorder/30 rounded-2xl p-4.5 space-y-3 shadow-inner">
+                    <div className="flex items-center gap-2 border-b border-darkBorder/25 pb-2">
+                      <span className="bg-cyan-950 border border-cyan-500/20 px-2.5 py-0.5 rounded-lg text-[10px] font-mono font-bold text-cyan-400">
+                        STEP {videoStepIdx + 1}
+                      </span>
+                      <h4 className="text-sm font-bold text-white uppercase tracking-wider">
+                        {currentStep.title.replace(/^\d+\.\s*/, '')}
+                      </h4>
+                    </div>
+
+                    <div className="space-y-3 leading-relaxed">
+                      <p className="text-xs text-slate-300 leading-relaxed font-sans text-justify">
+                        {currentStep.detailedExplanation}
+                      </p>
+
+                      {/* Safety compliance note */}
+                      <div className="bg-slate-950/50 rounded-xl p-3 border border-darkBorder/20 flex gap-2 items-start">
+                        <ShieldAlert className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5" />
+                        <p className="text-[10px] text-slate-500 font-mono leading-normal">
+                          Educational only. Not financial advice. No buy/sell signal. Real markets carry capital risk. Past simulation readings do not guarantee future success.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <Badge variant="cyan" className="font-mono text-xs uppercase py-0.5 px-2">
-                  {activeAnalysisSnapshot.toolName}
-                </Badge>
-              </div>
 
-              {/* Steps List */}
-              <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
-                {steps.map((st, i) => (
-                  <div key={i} className="bg-[#111726]/40 p-4 rounded-xl border border-darkBorder/30 space-y-2">
-                    <div className="flex items-center gap-2 text-xs font-bold text-cyan-400 uppercase tracking-wider border-b border-darkBorder/25 pb-1.5">
-                      <span className="bg-cyan-950 border border-cyan-500/20 px-2 py-0.5 rounded text-[10px] text-cyan-300">Step {i + 1}</span>
-                      <span>{st.title.replace(/^\d+\.\s*/, '')}</span>
-                    </div>
-                    <div className="space-y-1.5 mt-2">
-                      <p className="text-xs font-semibold text-slate-200">
-                        Summary: {st.caption}
-                      </p>
-                      <p className="text-xs text-slate-400 leading-relaxed">
-                        {st.detailedExplanation}
-                      </p>
-                    </div>
+                {/* RIGHT COLUMN: Interactive Lesson Checklist / Timeline */}
+                <div className="lg:col-span-5 space-y-3">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">
+                    Lesson Timeline
+                  </h4>
+                  
+                  {/* Container for Checklist */}
+                  <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1.5 custom-scrollbar scrollbar-thin">
+                    {steps.map((st, i) => {
+                      const isActive = i === videoStepIdx;
+                      const isPast = i < videoStepIdx;
+                      
+                      return (
+                        <div
+                          key={i}
+                          id={`video-step-${i}`}
+                          onClick={() => {
+                            setIsLessonCompleted(false);
+                            setVideoStepIdx(i);
+                          }}
+                          className={`group flex items-start gap-2.5 p-2 md:p-2.5 rounded-xl border transition cursor-pointer text-left ${
+                            isActive
+                              ? 'bg-gradient-to-r from-cyan-950/30 to-purple-950/20 border-cyan-500/40 shadow-[0_0_12px_rgba(6,182,212,0.1)]'
+                              : isPast
+                                ? 'bg-slate-900/10 border-slate-900/40 text-slate-400 opacity-80 hover:opacity-100 hover:border-slate-800'
+                                : 'bg-slate-950/20 border-slate-950/40 text-slate-500 hover:text-slate-300 hover:border-slate-900'
+                          }`}
+                        >
+                          {/* Glowing Dot or Indicator */}
+                          <div className="mt-0.5 shrink-0 flex items-center justify-center">
+                            {isPast ? (
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                            ) : (
+                              <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center text-[8px] font-mono font-bold transition-all ${
+                                isActive
+                                  ? 'bg-cyan-500 border-cyan-400 text-slate-950 ring-2 ring-cyan-950 shadow-[0_0_8px_rgba(6,182,212,0.6)] animate-pulse'
+                                  : 'border-slate-700 bg-slate-900 text-slate-400 group-hover:border-slate-500'
+                              }`}>
+                                {i + 1}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex-1 space-y-0.5 overflow-hidden">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className={`text-[11px] font-bold transition-colors leading-tight ${
+                                isActive ? 'text-cyan-400 font-semibold' : 'text-slate-200'
+                              }`}>
+                                {st.title.replace(/^\d+\.\s*/, '')}
+                              </span>
+                              {isActive && (
+                                <span className="text-[7px] text-cyan-400 uppercase tracking-widest font-bold font-mono animate-pulse">
+                                  ACTIVE
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[9px] text-slate-400 leading-snug truncate">
+                              {st.caption}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
+
+                  {/* Quick Player Help Stats */}
+                  <div className="bg-[#111726]/10 border border-darkBorder/20 p-3 rounded-xl flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                    <span className="flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                      Guided Lesson System v2.0
+                    </span>
+                    <span>
+                      {availableVoices.length > 0 ? `${availableVoices.length} Web Voices Loaded` : "Simulated Timing"}
+                    </span>
+                  </div>
+                </div>
+
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-darkBorder/30">
+              {/* Action Buttons / Close bottom bar */}
+              <div className="flex items-center justify-end gap-3 pt-3.5 border-t border-darkBorder/30">
+                {isStale && (
+                  <button
+                    onClick={() => {
+                      handleCloseVideoBreakdown();
+                      handleRunAnalysis();
+                    }}
+                    className="flex items-center gap-1.5 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-slate-950 text-xs font-bold px-4 py-2 rounded-xl transition cursor-pointer shadow-md"
+                  >
+                    <Zap className="w-3.5 h-3.5 fill-slate-950" />
+                    Run Updated Scan
+                  </button>
+                )}
                 <Button 
                   variant="secondary" 
                   size="md" 
-                  onClick={() => setIsVideoOpen(false)} 
+                  onClick={handleCloseVideoBreakdown} 
                   className="px-5 py-2 text-xs font-semibold rounded-xl cursor-pointer"
                 >
-                  Close Walkthrough
+                  Close Lesson
                 </Button>
               </div>
             </div>
