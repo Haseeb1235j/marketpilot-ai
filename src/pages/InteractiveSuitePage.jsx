@@ -73,8 +73,12 @@ export default function InteractiveSuitePage() {
 
   // 5. Journal States
   const [journalLogs, setJournalLogs] = useState(() => {
-    const saved = localStorage.getItem('mp_journal_logs');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('mp_journal_logs');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
   const [journalInput, setJournalInput] = useState({
     asset: 'BTC/USDT',

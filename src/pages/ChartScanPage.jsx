@@ -76,8 +76,15 @@ export default function ChartScanPage({
 }) {
   // UI states
   const [watchlist, setWatchlist] = useState(() => {
-    const saved = localStorage.getItem('mp_watchlist');
-    let list = saved ? JSON.parse(saved) : DEFAULT_WATCHLIST;
+    let list = DEFAULT_WATCHLIST;
+    try {
+      const saved = localStorage.getItem('mp_watchlist');
+      if (saved) {
+        list = JSON.parse(saved);
+      }
+    } catch (e) {
+      console.warn('Failed to parse watchlist from localStorage', e);
+    }
 
     // Ensure all default watchlist items are present in the list
     let listUpdated = false;
@@ -144,8 +151,12 @@ export default function ChartScanPage({
     return list;
   });
   const [favorites, setFavorites] = useState(() => {
-    const saved = localStorage.getItem('mp_favorites');
-    return saved ? JSON.parse(saved) : ['BTC/USDT', 'ETH/USDT', 'XAUUSD'];
+    try {
+      const saved = localStorage.getItem('mp_favorites');
+      return saved ? JSON.parse(saved) : ['BTC/USDT', 'ETH/USDT', 'XAUUSD'];
+    } catch {
+      return ['BTC/USDT', 'ETH/USDT', 'XAUUSD'];
+    }
   });
   const [customSymbol, setCustomSymbol] = useState('');
   const [customMarketType, setCustomMarketType] = useState('crypto');
@@ -174,12 +185,20 @@ export default function ChartScanPage({
   // Analysis states & Frozen Snapshots
   const [analysisResult, setAnalysisResult] = useState(null);
   const [activeAnalysisSnapshot, setActiveAnalysisSnapshot] = useState(() => {
-    const saved = localStorage.getItem('mp_active_analysis');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem('mp_active_analysis');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
   const [activeChartSnapshot, setActiveChartSnapshot] = useState(() => {
-    const saved = localStorage.getItem('mp_active_candles');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem('mp_active_candles');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
   const [activeSymbolSnapshot, setActiveSymbolSnapshot] = useState(() => {
     return localStorage.getItem('mp_active_symbol') || '';

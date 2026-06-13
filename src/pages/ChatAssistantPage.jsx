@@ -25,7 +25,11 @@ export default function ChatAssistantPage({
   useEffect(() => {
     const saved = localStorage.getItem('mp_active_analysis');
     if (saved) {
-      setActiveSnapshot(JSON.parse(saved));
+      try {
+        setActiveSnapshot(JSON.parse(saved));
+      } catch {
+        setActiveSnapshot(null);
+      }
     } else {
       setActiveSnapshot(null);
     }
@@ -486,7 +490,12 @@ export default function ChatAssistantPage({
 
     // Fetch snapshot
     const saved = localStorage.getItem('mp_active_analysis');
-    const snap = saved ? JSON.parse(saved) : null;
+    let snap = null;
+    try {
+      snap = saved ? JSON.parse(saved) : null;
+    } catch {
+      snap = null;
+    }
     
     // Simulate assistant typing delay
     setTimeout(() => {
