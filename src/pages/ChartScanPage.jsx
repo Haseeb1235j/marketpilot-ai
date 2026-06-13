@@ -13,6 +13,8 @@ import { getToolFromRegistry } from '../analysis/toolEngineRegistry';
 import { generateSeededCandles } from '../utils/seededRandom';
 import { marketDataProvider, checkApiStatus, toBinanceSymbol, toBinanceInterval } from '../services/marketDataProvider';
 import { TOOLS_DIRECTORY } from '../data/toolsDirectory';
+import { resolveProvider } from '../providers/providerEngine';
+import LockedMarketPanel from '../components/LockedMarketPanel';
 
 /**
  * Detect market category type based on symbol nomenclature
@@ -51,6 +53,15 @@ function detectMarketTypeFromSymbol(symbol) {
   }
 
   return null;
+}
+
+function getNormalMarketType(market) {
+  if (!market) return 'crypto';
+  const m = market.toLowerCase();
+  if (m === 'stock' || m === 'stocks') return 'stocks';
+  if (m === 'index' || m === 'indices') return 'indices';
+  if (m === 'commodity' || m === 'commodities') return 'commodities';
+  return m;
 }
 
 export default function ChartScanPage({
@@ -235,28 +246,26 @@ export default function ChartScanPage({
 
     if (chartSource === 'live') {
       const currentItem = watchlist.find(w => w.symbol === selectedSymbol);
-      const currentMarketType = currentItem ? currentItem.marketType : 'crypto';
+      const rawMarketType = currentItem ? currentItem.marketType : (detectMarketTypeFromSymbol(selectedSymbol) || 'crypto');
+      const currentMarketType = getNormalMarketType(rawMarketType);
 
-      // --- FIX: Block non-crypto markets with no API key from showing random demo data ---
-      const isNonCrypto = currentMarketType !== 'crypto';
-      const hasTwelveDataKey = !!import.meta.env.VITE_TWELVEDATA_API_KEY;
-      const hasAlphaVantageKey = !!import.meta.env.VITE_ALPHAVANTAGE_API_KEY;
-      const hasFinnhubKey = !!import.meta.env.VITE_FINNHUB_API_KEY;
-      const hasPolygonKey = !!import.meta.env.VITE_POLYGON_API_KEY;
-      const hasAnyNonCryptoKey = hasTwelveDataKey || hasAlphaVantageKey || hasFinnhubKey || hasPolygonKey;
+      const provider = resolveProvider(currentMarketType);
+      const explicitDemoMode = import.meta.env.VITE_MARKET_DATA_MODE === 'demo';
 
-      if (isNonCrypto && !hasAnyNonCryptoKey) {
-        // Locked: do NOT seed demo candles, do NOT call any provider
-        const requiresKey = 'VITE_TWELVEDATA_API_KEY';
-        const marketLabels = { forex: 'Forex', stocks: 'Stocks', indices: 'Indices', commodities: 'Commodities', etfs: 'ETFs' };
-        const marketLabel = marketLabels[currentMarketType] || currentMarketType.toUpperCase();
-        setLockedMarket({ market: currentMarketType, marketLabel, requiresKey });
+      if (!provider.isLive && !explicitDemoMode) {
+        setLockedMarket({
+          market: currentMarketType,
+          providerName: provider.providerName,
+          requiresKey: provider.requiresKey,
+          feedLabel: provider.feedLabel,
+          status: provider.status,
+        });
         setCandles([]);
         setFeedStatus({
           mode: 'locked',
-          message: `${marketLabel} — API Key Required`,
+          message: provider.feedLabel,
           isLive: false,
-          error: `${marketLabel} charts require a market data provider API key.`,
+          error: `${currentMarketType} charts require a market data provider.`,
           warning: null
         });
         return () => { active = false; };
@@ -266,13 +275,15 @@ export default function ChartScanPage({
       setLockedMarket(null);
 
       // Seed demo data instantly so chart never flashes empty (crypto only)
-      const localData = generateSeededCandles(selectedSymbol, selectedTimeframe);
-      setCandles(localData.candles);
+      if (currentMarketType === 'crypto') {
+        const localData = generateSeededCandles(selectedSymbol, selectedTimeframe);
+        setCandles(localData.candles);
+      }
 
       marketDataProvider({
         symbol: selectedSymbol,
         timeframe: selectedTimeframe,
-        marketType: currentMarketType,
+        marketType: rawMarketType,
         mode: import.meta.env.VITE_MARKET_DATA_MODE || 'demo'
       }).then((res) => {
         if (active) {
@@ -1599,19 +1610,42 @@ financial decisions, risk planning, and educational study results.
                   const isFav = favorites.includes(row.symbol);
                   const isSelected = selectedSymbol === row.symbol;
                   
+                  const provider = resolveProvider(getNormalMarketType(row.marketType));
+                  const explicitDemoMode = import.meta.env.VITE_MARKET_DATA_MODE === 'demo';
+                  const isLocked = !provider.isLive && !explicitDemoMode;
+                  
                   return (
                     <div
                       key={row.symbol}
-                      onClick={() => handleSelectSymbol(row.symbol, row.marketType)}
-                      className={`flex items-center justify-between py-2 px-3 rounded-lg cursor-pointer transition-all ${
-                        isSelected
-                          ? 'bg-cyan-500/10 border-l-2 border-cyan-500 text-cyan-400 font-semibold'
-                          : 'hover:bg-slate-900/80 text-slate-300'
-                      }`}
+                      onClick={() => {
+                        if (isLocked) {
+                          setSelectedSymbol(row.symbol);
+                          const currentMarketType = getNormalMarketType(row.marketType);
+                          setLockedMarket({
+                            market: currentMarketType,
+                            providerName: provider.providerName,
+                            requiresKey: provider.requiresKey,
+                            feedLabel: provider.feedLabel,
+                            status: provider.status,
+                          });
+                          setCandles([]);
+                          setFeedStatus({
+                            mode: 'locked',
+                            message: provider.feedLabel,
+                            isLive: false,
+                            error: `${currentMarketType} charts require a market data provider.`,
+                            warning: null
+                          });
+                          return;
+                        }
+                        handleSelectSymbol(row.symbol, row.marketType);
+                      }}
+                      className={`watchlist-item ${isSelected ? 'active' : ''} ${isLocked ? 'locked' : ''}`}
                     >
                       <div className="flex items-center gap-2.5">
                         <button
                           type="button"
+                          disabled={isLocked}
                           onClick={(e) => {
                             e.stopPropagation();
                             toggleFavorite(row.symbol);
@@ -1625,12 +1659,17 @@ financial decisions, risk planning, and educational study results.
                           <div className="text-[9px] text-slate-500 uppercase tracking-wider">{row.marketType}</div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-xs font-semibold font-mono">{row.price}</div>
-                        <div className={`text-[10px] font-bold ${row.isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
-                          {row.change}
+                      
+                      {isLocked ? (
+                        <span className="watchlist-locked-badge">Pro</span>
+                      ) : (
+                        <div className="text-right">
+                          <div className="text-xs font-semibold font-mono">{row.price}</div>
+                          <div className={`text-[10px] font-bold ${row.isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {row.change}
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   );
                 });
@@ -1900,27 +1939,7 @@ financial decisions, risk planning, and educational study results.
 
         {/* Main Candlestick Chart — or Locked Market Panel */}
         {lockedMarket ? (
-          <div className="flex flex-col items-center justify-center min-h-[320px] rounded-2xl border border-slate-800/60 bg-slate-950/80 p-8 text-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-700/50 flex items-center justify-center text-3xl shadow-inner">
-              🔒
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-white mb-1">
-                {lockedMarket.marketLabel} Charts — Provider Key Required
-              </h3>
-              <p className="text-xs text-slate-400 max-w-sm leading-relaxed mb-3">
-                Live {lockedMarket.marketLabel} charts require a connected market data provider.
-                Add <code className="text-cyan-400 bg-slate-900 px-1.5 py-0.5 rounded font-mono text-[11px]">{lockedMarket.requiresKey}</code> to
-                your <code className="text-slate-300 bg-slate-900 px-1 py-0.5 rounded font-mono text-[11px]">.env</code> file and restart the app.
-              </p>
-              <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-amber-500/20 bg-amber-950/20">
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span className="text-[11px] text-amber-300/80 font-medium">
-                  Demo preview is not available for {lockedMarket.marketLabel}. Crypto (BTC, ETH, SOL…) works without any API key.
-                </span>
-              </div>
-            </div>
-          </div>
+          <LockedMarketPanel info={lockedMarket} />
         ) : (
           <ChartContainer
             candles={candles}

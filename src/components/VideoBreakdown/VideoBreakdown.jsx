@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { generateAllSlides, getTotalDuration, formatTime } from './slideGenerators';
 import { formatPrice } from '../../utils/priceFormatter';
+import { voiceEngine } from '../../utils/voiceNarration';
 
 // ─── Icon Map ──────────────────────────────────────────────────────────────
 const ICON_MAP = {
@@ -345,6 +346,7 @@ export default function VideoBreakdown({ scan, isOpen, onClose, isStale = false,
   const [elapsed, setElapsed] = useState(0);            // total seconds elapsed
   const [isMuted, setIsMuted] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const [voiceSupported] = useState('speechSynthesis' in window);
 
   const rafRef = useRef(null);
   const startTimeRef = useRef(null);
@@ -352,9 +354,7 @@ export default function VideoBreakdown({ scan, isOpen, onClose, isStale = false,
 
   // Stop speech helper
   const stopSpeech = useCallback(() => {
-    if (window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-    }
+    voiceEngine.stop();
   }, []);
 
   // Cancel animation frame helper
@@ -461,7 +461,7 @@ export default function VideoBreakdown({ scan, isOpen, onClose, isStale = false,
       setProgress(0);
       setWordProgress(0);
       setElapsed(0);
-      setIsPlaying(false);
+      setIsPlaying(true);
       setIsComplete(false);
       pausedProgressRef.current = 0;
       stopSpeech();
@@ -471,11 +471,47 @@ export default function VideoBreakdown({ scan, isOpen, onClose, isStale = false,
     }
   }, [isOpen, stopSpeech, cancelRaf]);
 
+  // When slide changes, speak the narration:
+  useEffect(() => {
+    if (!isOpen || !slides.length || isComplete) return;
+    const slide = slides[currentIdx];
+    if (!slide) return;
+    
+    if (isPlaying) {
+      voiceEngine.speak(slide.narration, speed);
+    }
+  }, [currentIdx, isPlaying, slides, isOpen, isComplete, speed]);
+
+  // When play/pause changes:
+  useEffect(() => {
+    if (!isOpen) return;
+    if (isPlaying) {
+      voiceEngine.resume();
+    } else {
+      voiceEngine.pause();
+    }
+  }, [isPlaying, isOpen]);
+
+  // When muted:
+  useEffect(() => {
+    voiceEngine.setMuted(isMuted);
+    if (!isMuted && isPlaying && isOpen && slides.length) {
+      const slide = slides[currentIdx];
+      if (slide) {
+        voiceEngine.speak(slide.narration, speed);
+      }
+    }
+  }, [isMuted, isPlaying, isOpen, currentIdx, slides, speed]);
+
+  // Cleanup on modal close:
+  useEffect(() => {
+    return () => voiceEngine.stop();
+  }, []);
+
   // Start/stop RAF loop when play state changes
   useEffect(() => {
     if (!isPlaying || !slides.length || isComplete) {
       cancelRaf();
-      stopSpeech();
       return;
     }
 
@@ -485,14 +521,6 @@ export default function VideoBreakdown({ scan, isOpen, onClose, isStale = false,
     const slideDuration = currentSlide.duration / speed;
     const words = currentSlide.narration.trim().split(/\s+/);
     const totalWords = words.length;
-
-    // Start speech
-    if (!isMuted && window.speechSynthesis) {
-      stopSpeech();
-      const utterance = new SpeechSynthesisUtterance(currentSlide.narration);
-      utterance.rate = speed;
-      window.speechSynthesis.speak(utterance);
-    }
 
     // RAF loop
     const startTime = performance.now() - pausedProgressRef.current * slideDuration * 1000;
@@ -521,7 +549,7 @@ export default function VideoBreakdown({ scan, isOpen, onClose, isStale = false,
     return () => {
       cancelRaf();
     };
-  }, [isPlaying, currentIdx, speed, isMuted, slides, isComplete, stopSpeech, cancelRaf, advanceSlide]);
+  }, [isPlaying, currentIdx, speed, slides, isComplete, cancelRaf, advanceSlide]);
 
 
   // ── Derived values ────────────────────────────────────────────────────
@@ -587,9 +615,13 @@ export default function VideoBreakdown({ scan, isOpen, onClose, isStale = false,
             {isStale && (
               <span className="text-[10px] bg-amber-500/10 border border-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full font-semibold">Stale Snapshot</span>
             )}
-            <button onClick={() => setIsMuted(m => !m)} className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
-              {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-            </button>
+            {!voiceSupported ? (
+              <span className="text-[10px] text-red-400 shrink-0 font-medium px-2">🔇 Voice unsupported</span>
+            ) : (
+              <button onClick={() => setIsMuted(m => !m)} className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
+                {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+              </button>
+            )}
             <button onClick={handleClose} className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
               <X className="w-4 h-4" />
             </button>

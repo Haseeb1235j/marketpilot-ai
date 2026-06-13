@@ -1,0 +1,88 @@
+:root {
+  /* === COLORS === */
+  --color-bg-base:        #060810;
+  --color-bg-surface:     #0d1117;
+  --color-bg-elevated:    #13181f;
+  --color-bg-card:        #161b24;
+  --color-bg-hover:       #1c2230;
+  --color-bg-active:      #202736;
+
+  --color-border-subtle:  rgba(255,255,255,0.04);
+  --color-border-default: rgba(255,255,255,0.08);
+  --color-border-strong:  rgba(255,255,255,0.14);
+  --color-border-cyan:    rgba(0,216,255,0.25);
+
+  --color-cyan:           #00D8FF;
+  --color-cyan-dim:       rgba(0,216,255,0.15);
+  --color-cyan-glow:      rgba(0,216,255,0.08);
+  --color-cyan-text:      #00D8FF;
+
+  --color-green:          #00C896;
+  --color-green-dim:      rgba(0,200,150,0.12);
+  --color-red:            #FF4D6D;
+  --color-red-dim:        rgba(255,77,109,0.12);
+  --color-amber:          #F59E0B;
+  --color-amber-dim:      rgba(245,158,11,0.12);
+  --color-purple:         #A78BFA;
+  --color-purple-dim:     rgba(167,139,250,0.12);
+
+  --color-text-primary:   #F1F5F9;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted:     #475569;
+  --color-text-dim:       #334155;
+
+  /* === TYPOGRAPHY === */
+  --font-sans:     'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono:     'JetBrains Mono', 'Fira Code', monospace;
+  --font-display:  'Inter', sans-serif;
+
+  --text-xs:   11px;
+  --text-sm:   12px;
+  --text-base: 14px;
+  --text-md:   15px;
+  --text-lg:   17px;
+  --text-xl:   20px;
+  --text-2xl:  24px;
+  --text-3xl:  30px;
+  --text-4xl:  38px;
+
+  --weight-normal:  400;
+  --weight-medium:  500;
+  --weight-semi:    600;
+  --weight-bold:    700;
+
+  /* === SPACING === */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* === RADIUS === */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* === SHADOWS === */
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md:   0 4px 16px rgba(0,0,0,0.5);
+  --shadow-lg:   0 8px 32px rgba(0,0,0,0.6);
+  --shadow-cyan: 0 0 24px rgba(0,216,255,0.12);
+
+  /* === TRANSITIONS === */
+  --transition-fast:   all 0.12s ease;
+  --transition-base:   all 0.2s ease;
+  --transition-slow:   all 0.35s ease;
+
+  /* === Z-INDEX === */
+  --z-base:    1;
+  --z-overlay: 10;
+  --z-modal:   100;
+  --z-toast:   1000;
+}
