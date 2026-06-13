@@ -225,17 +225,49 @@ export default function ChartScanPage({
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [lessonHighlights, setLessonHighlights] = useState([]);
 
+  // Locked market state — for non-crypto markets with no API key
+  const [lockedMarket, setLockedMarket] = useState(null);
+  // { market, requiresKey, feedLabel }
+
   // Generate/fetch candles on symbol, timeframe, or feed mode shift
   useEffect(() => {
     let active = true;
 
-    // Always seed local data instantly so the UI never flashes empty
-    const localData = generateSeededCandles(selectedSymbol, selectedTimeframe);
-    setCandles(localData.candles);
-
     if (chartSource === 'live') {
       const currentItem = watchlist.find(w => w.symbol === selectedSymbol);
       const currentMarketType = currentItem ? currentItem.marketType : 'crypto';
+
+      // --- FIX: Block non-crypto markets with no API key from showing random demo data ---
+      const isNonCrypto = currentMarketType !== 'crypto';
+      const hasTwelveDataKey = !!import.meta.env.VITE_TWELVEDATA_API_KEY;
+      const hasAlphaVantageKey = !!import.meta.env.VITE_ALPHAVANTAGE_API_KEY;
+      const hasFinnhubKey = !!import.meta.env.VITE_FINNHUB_API_KEY;
+      const hasPolygonKey = !!import.meta.env.VITE_POLYGON_API_KEY;
+      const hasAnyNonCryptoKey = hasTwelveDataKey || hasAlphaVantageKey || hasFinnhubKey || hasPolygonKey;
+
+      if (isNonCrypto && !hasAnyNonCryptoKey) {
+        // Locked: do NOT seed demo candles, do NOT call any provider
+        const requiresKey = 'VITE_TWELVEDATA_API_KEY';
+        const marketLabels = { forex: 'Forex', stocks: 'Stocks', indices: 'Indices', commodities: 'Commodities', etfs: 'ETFs' };
+        const marketLabel = marketLabels[currentMarketType] || currentMarketType.toUpperCase();
+        setLockedMarket({ market: currentMarketType, marketLabel, requiresKey });
+        setCandles([]);
+        setFeedStatus({
+          mode: 'locked',
+          message: `${marketLabel} — API Key Required`,
+          isLive: false,
+          error: `${marketLabel} charts require a market data provider API key.`,
+          warning: null
+        });
+        return () => { active = false; };
+      }
+
+      // Not locked — clear any previous lock and proceed normally
+      setLockedMarket(null);
+
+      // Seed demo data instantly so chart never flashes empty (crypto only)
+      const localData = generateSeededCandles(selectedSymbol, selectedTimeframe);
+      setCandles(localData.candles);
 
       marketDataProvider({
         symbol: selectedSymbol,
@@ -255,6 +287,9 @@ export default function ChartScanPage({
         }
       });
     } else {
+      setLockedMarket(null);
+      const localData = generateSeededCandles(selectedSymbol, selectedTimeframe);
+      setCandles(localData.candles);
       setFeedStatus({
         mode: 'screenshot',
         message: 'Screenshot Mode',
@@ -1796,13 +1831,13 @@ financial decisions, risk planning, and educational study results.
                 <Button
                   variant="glass"
                   size="sm"
-                  disabled={!activeAnalysisSnapshot || isStale}
+                  disabled={!activeAnalysisSnapshot}
                   onClick={handleOpenVideoBreakdown}
                   className={`rounded-xl transition h-8 text-xs px-3 ${
                     !activeAnalysisSnapshot
                       ? 'opacity-50 cursor-not-allowed border-slate-800 text-slate-500 bg-slate-950/60'
                       : isStale
-                        ? 'opacity-60 cursor-not-allowed border-amber-500/20 text-amber-500/80 bg-slate-950/40 hover:bg-transparent'
+                        ? 'border-amber-500/30 text-amber-400 hover:bg-amber-500/10'
                         : 'border-purple-500/20 text-purple-400 hover:bg-purple-500/10'
                   }`}
                   icon={MonitorPlay}
@@ -1863,19 +1898,43 @@ financial decisions, risk planning, and educational study results.
           )}
         </div>
 
-        {/* Main Candlestick Chart */}
-        <ChartContainer
-          candles={candles}
-          overlays={displayResult?.overlays || []}
-          symbol={selectedSymbol}
-          timeframe={selectedTimeframe}
-          chartSource={chartSource}
-          onScreenshotCalibration={() => setIsCalibrating(true)}
-          isFullscreen={isFullViewOpen}
-          onFullscreenToggle={() => setIsFullViewOpen(!isFullViewOpen)}
-          selectedTool={selectedTool}
-          feedStatus={feedStatus}
-        />
+        {/* Main Candlestick Chart — or Locked Market Panel */}
+        {lockedMarket ? (
+          <div className="flex flex-col items-center justify-center min-h-[320px] rounded-2xl border border-slate-800/60 bg-slate-950/80 p-8 text-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-700/50 flex items-center justify-center text-3xl shadow-inner">
+              🔒
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-white mb-1">
+                {lockedMarket.marketLabel} Charts — Provider Key Required
+              </h3>
+              <p className="text-xs text-slate-400 max-w-sm leading-relaxed mb-3">
+                Live {lockedMarket.marketLabel} charts require a connected market data provider.
+                Add <code className="text-cyan-400 bg-slate-900 px-1.5 py-0.5 rounded font-mono text-[11px]">{lockedMarket.requiresKey}</code> to
+                your <code className="text-slate-300 bg-slate-900 px-1 py-0.5 rounded font-mono text-[11px]">.env</code> file and restart the app.
+              </p>
+              <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-amber-500/20 bg-amber-950/20">
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span className="text-[11px] text-amber-300/80 font-medium">
+                  Demo preview is not available for {lockedMarket.marketLabel}. Crypto (BTC, ETH, SOL…) works without any API key.
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <ChartContainer
+            candles={candles}
+            overlays={displayResult?.overlays || []}
+            symbol={selectedSymbol}
+            timeframe={selectedTimeframe}
+            chartSource={chartSource}
+            onScreenshotCalibration={() => setIsCalibrating(true)}
+            isFullscreen={isFullViewOpen}
+            onFullscreenToggle={() => setIsFullViewOpen(!isFullViewOpen)}
+            selectedTool={selectedTool}
+            feedStatus={feedStatus}
+          />
+        )}
 
         {/* Scroll status message notification */}
         {scrollMessage && (
