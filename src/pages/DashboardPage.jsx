@@ -373,7 +373,14 @@ const LatestScanCard = () => {
   useEffect(() => {
     try {
       const raw = localStorage.getItem('mp_active_analysis');
-      if (raw) setAnalysis(JSON.parse(raw));
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          setAnalysis(parsed);
+        } else {
+          setAnalysis(null);
+        }
+      }
     } catch {
       setAnalysis(null);
     }

@@ -174,7 +174,14 @@ export default function ReportsPage() {
   useEffect(() => {
     try {
       const raw = localStorage.getItem('mp_active_analysis');
-      if (raw) setScan(JSON.parse(raw));
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          setScan(parsed);
+        } else {
+          setScan(null);
+        }
+      }
     } catch {
       setScan(null);
     }

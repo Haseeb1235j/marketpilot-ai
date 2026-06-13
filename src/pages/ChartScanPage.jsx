@@ -80,10 +80,18 @@ export default function ChartScanPage({
     try {
       const saved = localStorage.getItem('mp_watchlist');
       if (saved) {
-        list = JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          list = parsed;
+        }
       }
     } catch (e) {
       console.warn('Failed to parse watchlist from localStorage', e);
+    }
+
+    // Ensure list is a valid array
+    if (!Array.isArray(list)) {
+      list = DEFAULT_WATCHLIST;
     }
 
     // Ensure all default watchlist items are present in the list
@@ -153,7 +161,11 @@ export default function ChartScanPage({
   const [favorites, setFavorites] = useState(() => {
     try {
       const saved = localStorage.getItem('mp_favorites');
-      return saved ? JSON.parse(saved) : ['BTC/USDT', 'ETH/USDT', 'XAUUSD'];
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+      return ['BTC/USDT', 'ETH/USDT', 'XAUUSD'];
     } catch {
       return ['BTC/USDT', 'ETH/USDT', 'XAUUSD'];
     }

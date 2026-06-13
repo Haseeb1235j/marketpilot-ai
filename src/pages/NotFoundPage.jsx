@@ -158,13 +158,13 @@ const NotFoundPage = ({ onNavigate }) => {
 
   const quickLinks = [
     {
-      id: 'ai-chart-scan',
+      id: 'scan',
       label: 'AI Chart Scan',
       icon: <BarChart3 size={16} />,
       description: 'Analyse charts with AI',
     },
     {
-      id: 'tools',
+      id: 'directory',
       label: 'Tools Directory',
       icon: <Compass size={16} />,
       description: 'Browse all trading tools',

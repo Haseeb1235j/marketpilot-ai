@@ -26,7 +26,12 @@ export default function ChatAssistantPage({
     const saved = localStorage.getItem('mp_active_analysis');
     if (saved) {
       try {
-        setActiveSnapshot(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') {
+          setActiveSnapshot(parsed);
+        } else {
+          setActiveSnapshot(null);
+        }
       } catch {
         setActiveSnapshot(null);
       }

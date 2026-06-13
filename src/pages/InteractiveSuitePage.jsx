@@ -75,7 +75,11 @@ export default function InteractiveSuitePage() {
   const [journalLogs, setJournalLogs] = useState(() => {
     try {
       const saved = localStorage.getItem('mp_journal_logs');
-      return saved ? JSON.parse(saved) : [];
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+      return [];
     } catch {
       return [];
     }

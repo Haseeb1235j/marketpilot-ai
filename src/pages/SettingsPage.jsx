@@ -115,7 +115,7 @@ export default function SettingsPage({ activeSession = {}, onLogout }) {
       const raw = localStorage.getItem('mp_active_analysis');
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (parsed?.timestamp) {
+        if (parsed && typeof parsed === 'object' && parsed.timestamp) {
           setLastScanTime(new Date(parsed.timestamp).toLocaleString());
         } else {
           setLastScanTime('Unknown');
