@@ -351,6 +351,7 @@ export default function VideoBreakdown({ scan, isOpen, onClose, isStale = false,
   const rafRef = useRef(null);
   const startTimeRef = useRef(null);
   const pausedProgressRef = useRef(0);
+  const lastSpokenIdxRef = useRef(-1);
 
   // Stop speech helper
   const stopSpeech = useCallback(() => {
@@ -464,48 +465,52 @@ export default function VideoBreakdown({ scan, isOpen, onClose, isStale = false,
       setIsPlaying(true);
       setIsComplete(false);
       pausedProgressRef.current = 0;
-      stopSpeech();
+      lastSpokenIdxRef.current = -1;
+      voiceEngine.stop();
     } else {
-      stopSpeech();
+      voiceEngine.stop();
       cancelRaf();
     }
-  }, [isOpen, stopSpeech, cancelRaf]);
+  }, [isOpen, cancelRaf]);
 
-  // When slide changes, speak the narration:
+  // Synchronize Voice Narration with slide and playing state
   useEffect(() => {
-    if (!isOpen || !slides.length || isComplete) return;
+    if (!isOpen || !slides.length || isComplete) {
+      voiceEngine.stop();
+      return;
+    }
+
     const slide = slides[currentIdx];
     if (!slide) return;
-    
-    if (isPlaying) {
-      voiceEngine.speak(slide.narration, speed);
-    }
-  }, [currentIdx, isPlaying, slides, isOpen, isComplete, speed]);
 
-  // When play/pause changes:
-  useEffect(() => {
-    if (!isOpen) return;
+    // Set muted state first
+    voiceEngine.setMuted(isMuted);
+
     if (isPlaying) {
-      voiceEngine.resume();
+      if (isMuted) {
+        voiceEngine.stop();
+      } else {
+        const isNewSlide = lastSpokenIdxRef.current !== currentIdx;
+        
+        if (isNewSlide) {
+          lastSpokenIdxRef.current = currentIdx;
+          voiceEngine.speak(slide.narration, speed);
+        } else if (voiceEngine.isPaused) {
+          voiceEngine.resume();
+        } else if (!voiceEngine.isSpeaking) {
+          voiceEngine.speak(slide.narration, speed);
+        }
+      }
     } else {
       voiceEngine.pause();
     }
-  }, [isPlaying, isOpen]);
-
-  // When muted:
-  useEffect(() => {
-    voiceEngine.setMuted(isMuted);
-    if (!isMuted && isPlaying && isOpen && slides.length) {
-      const slide = slides[currentIdx];
-      if (slide) {
-        voiceEngine.speak(slide.narration, speed);
-      }
-    }
-  }, [isMuted, isPlaying, isOpen, currentIdx, slides, speed]);
+  }, [isOpen, currentIdx, isPlaying, isMuted, speed, slides, isComplete]);
 
   // Cleanup on modal close:
   useEffect(() => {
-    return () => voiceEngine.stop();
+    return () => {
+      voiceEngine.stop();
+    };
   }, []);
 
   // Start/stop RAF loop when play state changes
@@ -597,8 +602,8 @@ export default function VideoBreakdown({ scan, isOpen, onClose, isStale = false,
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-2 md:p-4">
-      <div className="w-full max-w-4xl h-[95vh] md:h-[90vh] bg-[#08101e] border border-darkBorder/60 rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-2 md:p-4 vb-overlay">
+      <div className="w-full max-w-4xl h-[95vh] md:h-[90vh] bg-[#08101e] border border-darkBorder/60 rounded-2xl flex flex-col overflow-hidden shadow-2xl vb-modal">
 
         {/* ── Header ────────────────────────────────── */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-darkBorder/40 shrink-0">
@@ -638,17 +643,17 @@ export default function VideoBreakdown({ scan, isOpen, onClose, isStale = false,
         )}
 
         {/* ── Progress Dots ─────────────────────────── */}
-        <div className="flex items-center justify-center gap-1.5 py-3 border-b border-darkBorder/20 shrink-0 flex-wrap px-4">
+        <div className="flex items-center justify-center gap-1.5 py-3 border-b border-darkBorder/20 shrink-0 flex-wrap px-4 vb-dots">
           {slides.map((s, i) => (
             <button
               key={i}
               onClick={() => handleJumpToSlide(i)}
-              className={`transition-all duration-300 rounded-full cursor-pointer ${
+              className={`transition-all duration-300 rounded-full cursor-pointer vb-dot ${
                 i === currentIdx
-                  ? 'w-5 h-5 bg-cyan-500 ring-2 ring-cyan-500/30'
+                  ? 'active'
                   : i < currentIdx
-                  ? 'w-3 h-3 bg-cyan-700'
-                  : 'w-2.5 h-2.5 bg-slate-700 hover:bg-slate-500'
+                  ? 'completed'
+                  : ''
               }`}
               title={`Slide ${i + 1}: ${s.title}`}
             />
@@ -665,14 +670,14 @@ export default function VideoBreakdown({ scan, isOpen, onClose, isStale = false,
         </div>
 
         {/* ── Main Content Area ─────────────────────── */}
-        <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 gap-0">
+        <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 gap-0 vb-body">
           {/* Left: Slide Visual */}
-          <div className="border-r border-darkBorder/20 p-4 overflow-y-auto">
+          <div className="border-r border-darkBorder/20 p-4 overflow-y-auto vb-visual">
             {currentSlide && <SlideVisual slide={currentSlide} onDownloadReport={onDownloadReport} />}
           </div>
 
           {/* Right: Narration + Key Points */}
-          <div className="flex flex-col p-4 gap-3 overflow-y-auto">
+          <div className="flex flex-col p-4 gap-3 overflow-y-auto vb-narration-panel">
             {/* Highlight value if present */}
             {currentSlide?.highlightValue && (
               <div className="text-center">
@@ -684,7 +689,7 @@ export default function VideoBreakdown({ scan, isOpen, onClose, isStale = false,
 
             {/* Narration text reveal */}
             <div className="flex-1 min-h-0 overflow-y-auto">
-              <div className="text-[13px] leading-7 text-slate-600 font-medium select-none">
+              <div className="text-[13px] leading-7 text-slate-600 font-medium select-none vb-narration-text">
                 {getNarrationDisplay()}
               </div>
             </div>
@@ -715,7 +720,7 @@ export default function VideoBreakdown({ scan, isOpen, onClose, isStale = false,
         </div>
 
         {/* ── Playback Controls ─────────────────────── */}
-        <div className="px-4 pb-4 pt-2 border-t border-darkBorder/20 shrink-0">
+        <div className="px-4 pb-4 pt-2 border-t border-darkBorder/20 shrink-0 vb-controls">
           <div className="flex items-center gap-3">
             {/* Prev */}
             <button onClick={handlePrev} disabled={currentIdx === 0} className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 transition">
@@ -749,8 +754,8 @@ export default function VideoBreakdown({ scan, isOpen, onClose, isStale = false,
                 <button
                   key={s}
                   onClick={() => handleSpeedChange(s)}
-                  className={`text-[10px] font-bold px-2 py-1 rounded-lg transition ${
-                    speed === s ? 'bg-cyan-500 text-slate-950' : 'border border-slate-700 text-slate-400 hover:border-cyan-500/40 hover:text-slate-200'
+                  className={`text-[10px] font-bold px-2 py-1 rounded-lg transition vb-speed-btn ${
+                    speed === s ? 'active' : ''
                   }`}
                 >
                   {s}x

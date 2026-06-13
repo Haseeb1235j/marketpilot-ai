@@ -1640,7 +1640,11 @@ financial decisions, risk planning, and educational study results.
                         }
                         handleSelectSymbol(row.symbol, row.marketType);
                       }}
-                      className={`watchlist-item ${isSelected ? 'active' : ''} ${isLocked ? 'locked' : ''}`}
+                      className={`flex items-center justify-between py-2 px-3 rounded-lg cursor-pointer transition-all watchlist-item ${
+                        isSelected
+                          ? 'bg-cyan-500/10 border-l-2 border-cyan-500 text-cyan-400 font-semibold active'
+                          : 'hover:bg-slate-900/80 text-slate-300'
+                      } ${isLocked ? 'locked opacity-45 cursor-not-allowed' : ''}`}
                     >
                       <div className="flex items-center gap-2.5">
                         <button
