@@ -1,4 +1,4 @@
-﻿/**
+/**
  * MarketPilot AI - Price Formatter Utilities
  * Market-aware decimal precision for all asset classes.
  */
@@ -16,7 +16,7 @@ export function formatPrice(price, market, symbol) {
 
   if (market === 'forex') {
     const jpyPairs = ['USDJPY', 'EURJPY', 'GBPJPY', 'AUDJPY', 'CADJPY', 'CHFJPY', 'NZDJPY'];
-    return jpyPairs.some(j => sym.includes('JPY')) ? price.toFixed(3) : price.toFixed(5);
+    return jpyPairs.some(pair => sym.includes(pair)) ? price.toFixed(3) : price.toFixed(5);
   }
 
   if (market === 'crypto') {

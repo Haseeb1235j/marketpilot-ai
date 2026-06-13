@@ -349,99 +349,23 @@ export default function VideoBreakdown({ scan, isOpen, onClose, isStale = false,
   const rafRef = useRef(null);
   const startTimeRef = useRef(null);
   const pausedProgressRef = useRef(0);
-  const synthRef = useRef(null);
 
-  // Generate slides when scan changes
-  useEffect(() => {
-    if (scan) {
-      const generated = generateAllSlides(scan);
-      setSlides(generated);
-    }
-  }, [scan]);
-
-  // Reset on open
-  useEffect(() => {
-    if (isOpen) {
-      setCurrentIdx(0);
-      setProgress(0);
-      setWordProgress(0);
-      setElapsed(0);
-      setIsPlaying(false);
-      setIsComplete(false);
-      pausedProgressRef.current = 0;
-      stopSpeech();
-    } else {
-      stopSpeech();
-      cancelRaf();
-    }
-  }, [isOpen]);
-
-  // Stop speech on close
-  const stopSpeech = () => {
-    if (synthRef.current && window.speechSynthesis) {
+  // Stop speech helper
+  const stopSpeech = useCallback(() => {
+    if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
-  };
+  }, []);
 
-  const cancelRaf = () => {
+  // Cancel animation frame helper
+  const cancelRaf = useCallback(() => {
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     }
-  };
+  }, []);
 
-  // Start/stop RAF loop when play state changes
-  useEffect(() => {
-    if (!isPlaying || !slides.length || isComplete) {
-      cancelRaf();
-      stopSpeech();
-      return;
-    }
-
-    const currentSlide = slides[currentIdx];
-    if (!currentSlide) return;
-
-    const slideDuration = currentSlide.duration / speed;
-    const words = currentSlide.narration.trim().split(/\s+/);
-    const totalWords = words.length;
-
-    // Start speech
-    if (!isMuted && window.speechSynthesis) {
-      stopSpeech();
-      const utterance = new SpeechSynthesisUtterance(currentSlide.narration);
-      utterance.rate = speed;
-      window.speechSynthesis.speak(utterance);
-    }
-
-    // RAF loop
-    const startTime = performance.now() - pausedProgressRef.current * slideDuration * 1000;
-    startTimeRef.current = startTime;
-
-    const tick = (now) => {
-      const elapsed = (now - startTime) / 1000;
-      const p = Math.min(elapsed / slideDuration, 1);
-      setProgress(p);
-      setWordProgress(Math.floor(p * totalWords));
-
-      // Update total elapsed (approximate)
-      const prevSlidesDuration = slides.slice(0, currentIdx).reduce((sum, s) => sum + s.duration / speed, 0);
-      setElapsed(prevSlidesDuration + elapsed);
-
-      if (p >= 1) {
-        pausedProgressRef.current = 0;
-        advanceSlide();
-      } else {
-        rafRef.current = requestAnimationFrame(tick);
-      }
-    };
-
-    rafRef.current = requestAnimationFrame(tick);
-
-    return () => {
-      cancelRaf();
-    };
-  }, [isPlaying, currentIdx, speed, isMuted, slides]);
-
+  // Advance to next slide helper
   const advanceSlide = useCallback(() => {
     setProgress(0);
     setWordProgress(0);
@@ -453,11 +377,11 @@ export default function VideoBreakdown({ scan, isOpen, onClose, isStale = false,
       setIsComplete(true);
       return prev;
     });
-  }, [slides.length]);
+  }, [slides.length, stopSpeech]);
 
+  // Handle media controls
   const handlePlayPause = () => {
     if (isComplete) {
-      // Restart
       setCurrentIdx(0);
       setProgress(0);
       setWordProgress(0);
@@ -512,7 +436,6 @@ export default function VideoBreakdown({ scan, isOpen, onClose, isStale = false,
   const handleSpeedChange = (s) => {
     setSpeed(s);
     localStorage.setItem('marketpilot_video_speed', s.toString());
-    // Restart current slide timing
     pausedProgressRef.current = progress;
   };
 
@@ -522,6 +445,84 @@ export default function VideoBreakdown({ scan, isOpen, onClose, isStale = false,
     setIsPlaying(false);
     onClose();
   };
+
+  // Generate slides when scan changes
+  useEffect(() => {
+    if (scan) {
+      const generated = generateAllSlides(scan);
+      setSlides(generated);
+    }
+  }, [scan]);
+
+  // Reset on open
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentIdx(0);
+      setProgress(0);
+      setWordProgress(0);
+      setElapsed(0);
+      setIsPlaying(false);
+      setIsComplete(false);
+      pausedProgressRef.current = 0;
+      stopSpeech();
+    } else {
+      stopSpeech();
+      cancelRaf();
+    }
+  }, [isOpen, stopSpeech, cancelRaf]);
+
+  // Start/stop RAF loop when play state changes
+  useEffect(() => {
+    if (!isPlaying || !slides.length || isComplete) {
+      cancelRaf();
+      stopSpeech();
+      return;
+    }
+
+    const currentSlide = slides[currentIdx];
+    if (!currentSlide) return;
+
+    const slideDuration = currentSlide.duration / speed;
+    const words = currentSlide.narration.trim().split(/\s+/);
+    const totalWords = words.length;
+
+    // Start speech
+    if (!isMuted && window.speechSynthesis) {
+      stopSpeech();
+      const utterance = new SpeechSynthesisUtterance(currentSlide.narration);
+      utterance.rate = speed;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // RAF loop
+    const startTime = performance.now() - pausedProgressRef.current * slideDuration * 1000;
+    startTimeRef.current = startTime;
+
+    const tick = (now) => {
+      const elapsed = (now - startTime) / 1000;
+      const p = Math.min(elapsed / slideDuration, 1);
+      setProgress(p);
+      setWordProgress(Math.floor(p * totalWords));
+
+      // Update total elapsed (approximate)
+      const prevSlidesDuration = slides.slice(0, currentIdx).reduce((sum, s) => sum + s.duration / speed, 0);
+      setElapsed(prevSlidesDuration + elapsed);
+
+      if (p >= 1) {
+        pausedProgressRef.current = 0;
+        advanceSlide();
+      } else {
+        rafRef.current = requestAnimationFrame(tick);
+      }
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+
+    return () => {
+      cancelRaf();
+    };
+  }, [isPlaying, currentIdx, speed, isMuted, slides, isComplete, stopSpeech, cancelRaf, advanceSlide]);
+
 
   // ── Derived values ────────────────────────────────────────────────────
   const totalDuration = slides.reduce((sum, s) => sum + s.duration / speed, 0);
